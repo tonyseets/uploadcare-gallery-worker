@@ -21,3 +21,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Webflow integration script (`/uploader.js`) for automatic URL transformation
 - CDN allowlist security to restrict accepted Uploadcare hosts
 - File count validation (1-50 files per group)
+- Light mode as default theme
+- Retina display support for thumbnails (2x resolution)
