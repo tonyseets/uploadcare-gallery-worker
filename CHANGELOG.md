@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.2] - 2026-01-08
+
+### Changed
+
+- **Lightbox header redesign**: Moved controls from overlaying the image to a fixed header bar at top
+  - Left: Counter + Filename (truncates with ellipsis)
+  - Center: Download button (absolutely positioned)
+  - Right: Meta info (page slug + date) + Close button
+  - Mobile: Download shows icon only, meta hidden
+- **Card hover lightbox trigger**: Now shows full hover state (white background, dark icon) since lightbox is the default action for previewable files
+
+### Fixed
+
+- **Grid selector button height**: Now properly fills row height with `align-self: stretch` on parent
+
 ## [1.4.1] - 2026-01-08
 
 ### Added

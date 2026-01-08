@@ -445,17 +445,17 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     
     // Lightbox trigger button (only for previewable files)
     const lightboxTriggerHtml = canPreview 
-      ? `<button class="lightbox-trigger" aria-label="View ${escapedName} in lightbox" data-lightbox-index="${i}">
+      ? `<button type="button" class="lightbox-trigger" aria-label="View ${escapedName} in lightbox" data-lightbox-index="${i}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
         </button>`
       : '';
     
     return `
       <li class="file-card" data-index="${i}"${lightboxAttrs}>
+        ${lightboxTriggerHtml}
         <a href="${cardMainHref}"${cardMainTarget} class="card-main" title="${escapedName}">
           <div class="thumbnail-container">
             ${thumbnailHtml}
-            ${lightboxTriggerHtml}
           </div>
           <div class="file-info">
             <span class="file-name" title="${escapedName}">${displayName}</span>
@@ -1050,6 +1050,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       display: block;
       text-decoration: none;
       color: inherit;
+      position: relative;
+      z-index: 1;
     }
 
     /* Action checkmarks */
@@ -1128,27 +1130,24 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       background: var(--brand-bg);
     }
 
-    /* Card hover highlights download (the default), fades open */
-    .file-card:hover .download-action {
+    /* Card hover: both buttons ready (equal prominence) */
+    .file-card:hover .card-action {
       background: var(--brand-surface);
       color: var(--text-primary);
     }
 
-    .file-card:hover .open-action {
+    /* Individual button hover: that one highlighted, sibling fades */
+    .file-card:hover .download-action:hover ~ .open-action,
+    .file-card:hover:has(.download-action:hover) .open-action {
       opacity: 0.5;
-    }
-
-    /* Hovering open directly: open goes white, download fades */
-    .file-card:hover .open-action:hover {
-      background: var(--brand-surface);
-      color: var(--text-primary);
-      opacity: 1;
+      background: var(--brand-bg);
+      color: var(--text-secondary);
     }
 
     .file-card:hover .open-action:hover ~ .download-action,
     .file-card:hover:has(.open-action:hover) .download-action {
       opacity: 0.5;
-      background: transparent;
+      background: var(--brand-bg);
       color: var(--text-secondary);
     }
 
@@ -1194,25 +1193,30 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       justify-content: center;
       width: 2rem;
       height: 2rem;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.5);
       border: none;
       color: white;
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.15s, background 0.15s;
-      z-index: 10;
+      z-index: 20;
     }
 
+    /* Card hover shows lightbox trigger in full hover state (since lightbox is default action) */
     .file-card:hover .lightbox-trigger {
       opacity: 1;
+      background: rgba(255, 255, 255, 0.9);
+      color: #111;
     }
 
-    .lightbox-trigger:hover {
-      background: rgba(0, 0, 0, 0.8);
+    .lightbox-trigger:hover,
+    .lightbox-trigger:focus {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.9);
+      color: #111;
     }
 
     .lightbox-trigger:focus-visible {
-      opacity: 1;
       outline: 2px solid white;
       outline-offset: 2px;
     }
@@ -1484,7 +1488,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     /* Grid selector dropdown */
     .grid-selector {
       position: relative;
-      display: inline-block;
+      display: inline-flex;
+      align-self: stretch;
     }
 
     .grid-selector-btn {
@@ -1492,6 +1497,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.65rem;
+      height: 100%;
       font-size: 0.75rem;
       font-weight: 500;
       font-family: inherit;
@@ -1555,7 +1561,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .grid-selector-menu button.active {
-      color: var(--brand-color);
+      color: var(--text-primary);
       font-weight: 500;
     }
 
@@ -1630,10 +1636,80 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       background: #000;
     }
 
-    .lightbox-close {
-      position: absolute;
-      top: -2.5rem;
+    .lightbox-header {
+      position: fixed;
+      top: 0;
+      left: 0;
       right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+      z-index: 10;
+    }
+
+    .lightbox-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .lightbox-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .lightbox-counter {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-family: var(--font-display), monospace;
+      flex-shrink: 0;
+    }
+
+    .lightbox-download {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: white;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lightbox-download:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .lightbox-filename {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .lightbox-meta {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      white-space: nowrap;
+    }
+
+    .lightbox-close {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1651,35 +1727,21 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       border-color: rgba(255, 255, 255, 0.5);
     }
 
-    .lightbox-actions {
-      position: absolute;
-      bottom: -2.5rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .lightbox-action {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: white;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .lightbox-action:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.5);
+    /* Mobile: icon-only download, no meta */
+    @media (max-width: 640px) {
+      .lightbox-download span {
+        display: none;
+      }
+      .lightbox-download {
+        padding: 0.4rem;
+      }
+      .lightbox-meta {
+        display: none;
+      }
     }
 
     .lightbox-nav {
-      position: absolute;
+      position: fixed;
       top: 50%;
       transform: translateY(-50%);
       display: flex;
@@ -1705,51 +1767,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .lightbox-nav.prev {
-      left: -3.5rem;
+      left: 1rem;
     }
 
     .lightbox-nav.next {
-      right: -3.5rem;
+      right: 1rem;
     }
 
-    .lightbox-counter {
-      position: absolute;
-      top: -2.5rem;
-      left: 0;
-      font-size: 0.8125rem;
-      color: rgba(255, 255, 255, 0.7);
-      font-family: '${env.FONT_DISPLAY}', monospace;
-    }
-
-    @media (max-width: 768px) {
-      .lightbox-nav.prev {
-        left: 0.5rem;
-        top: auto;
-        bottom: -3rem;
-        transform: none;
-      }
-
-      .lightbox-nav.next {
-        right: 0.5rem;
-        top: auto;
-        bottom: -3rem;
-        transform: none;
-      }
-
-      .lightbox-actions {
-        bottom: -3rem;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      .lightbox-counter {
-        top: auto;
-        bottom: -3rem;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-      }
-    }
   </style>
 </head>
 <body>
@@ -1865,6 +1889,35 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       <a href="${env.COMPANY_URL}" target="_blank" rel="noopener noreferrer nofollow" class="footer-link">${companyDomain}</a>
     </div>
   </footer>
+
+  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer" data-page-slug="${pageSlug}" data-timestamp="${timestamp || ''}">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-header">
+      <div class="lightbox-header-left">
+        <span class="lightbox-counter"></span>
+        <span class="lightbox-filename"></span>
+      </div>
+      <a class="lightbox-download" href="" download aria-label="Download file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span>Download</span>
+      </a>
+      <div class="lightbox-header-right">
+        <span class="lightbox-meta"></span>
+        <button class="lightbox-close" aria-label="Close viewer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <div class="lightbox-container">
+      <button class="lightbox-nav prev" aria-label="Previous image">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="lightbox-content"></div>
+      <button class="lightbox-nav next" aria-label="Next image">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+  </div>` : ''}
 
   ${enableZipDownload ? `<script src="${getJsZipUrl(env)}"></script>` : ''}
   <script>
@@ -2303,11 +2356,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       
       const content = lightbox.querySelector('.lightbox-content');
       const downloadBtn = lightbox.querySelector('.lightbox-download');
-      const openBtn = lightbox.querySelector('.lightbox-open');
       const closeBtn = lightbox.querySelector('.lightbox-close');
       const prevBtn = lightbox.querySelector('.lightbox-nav.prev');
       const nextBtn = lightbox.querySelector('.lightbox-nav.next');
       const counter = lightbox.querySelector('.lightbox-counter');
+      const filenameEl = lightbox.querySelector('.lightbox-filename');
+      const metaEl = lightbox.querySelector('.lightbox-meta');
       
       // Get all lightbox-enabled cards
       const cards = Array.from(document.querySelectorAll('[data-lightbox="true"]'));
@@ -2344,13 +2398,34 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
           content.appendChild(img);
         }
         
-        // Update actions
+        // Update download action
         downloadBtn.href = downloadUrl;
-        openBtn.href = src;
         
         // Update counter
         if (counter) {
           counter.textContent = (index + 1) + ' / ' + cards.length;
+        }
+        
+        // Update filename
+        if (filenameEl) {
+          filenameEl.textContent = name;
+        }
+        
+        // Update meta (from page slug and timestamp)
+        if (metaEl) {
+          const pageSlug = lightbox.dataset.pageSlug;
+          const ts = lightbox.dataset.timestamp;
+          let metaText = '';
+          if (pageSlug) {
+            metaText = 'From /' + pageSlug;
+          }
+          if (ts) {
+            const date = new Date(parseInt(ts, 10) * 1000);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            metaText += (metaText ? ' on ' : '') + dateStr;
+          }
+          metaEl.textContent = metaText;
+          metaEl.style.display = metaText ? '' : 'none';
         }
         
         // Update nav buttons
@@ -2433,38 +2508,23 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         });
       });
       
+      // Wire up card-main clicks to open lightbox for previewable files
+      document.querySelectorAll('.file-card[data-lightbox="true"] .card-main').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const card = link.closest('.file-card');
+          const cardIndex = cards.indexOf(card);
+          if (cardIndex >= 0) {
+            openLightbox(cardIndex);
+          }
+        });
+      });
+      
       // Make openLightbox available globally for potential external use
       window.openLightbox = openLightbox;
       window.closeLightbox = closeLightbox;
     })();
   </script>
-
-  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer">
-    <div class="lightbox-backdrop"></div>
-    <div class="lightbox-container">
-      <span class="lightbox-counter"></span>
-      <button class="lightbox-close" aria-label="Close viewer">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-      <button class="lightbox-nav prev" aria-label="Previous image">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-      <div class="lightbox-content"></div>
-      <button class="lightbox-nav next" aria-label="Next image">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
-      <div class="lightbox-actions">
-        <a class="lightbox-action lightbox-download" href="" download aria-label="Download file">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          Download
-        </a>
-        <a class="lightbox-action lightbox-open" href="" target="_blank" rel="noopener noreferrer" aria-label="Open in new tab">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          Open
-        </a>
-      </div>
-    </div>
-  </div>` : ''}
 </body>
 </html>`;
 }
