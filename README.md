@@ -5,6 +5,10 @@ A Cloudflare Worker that transforms raw Uploadcare group URLs into a beautiful, 
 ![Gallery Preview](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+<p align="center">
+  <img src="./assets/screenshot.webp" alt="Gallery Screenshot" width="700">
+</p>
+
 ## The Problem
 
 When users upload files via Uploadcare (e.g., on Webflow forms), the URLs look like this:
