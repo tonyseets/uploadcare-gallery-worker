@@ -17,6 +17,7 @@ Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Tw
 | `webflow-snippet.js` | Reference copy of the uploader script (canonical version is in index.ts) |
 | `wrangler.toml.example` | Template for configuration (copy to wrangler.toml) |
 | `wrangler.toml` | Local config (gitignored - contains your specific branding) |
+| `CHANGELOG.md` | Version history (update when making notable changes) |
 
 ## Code Structure
 
