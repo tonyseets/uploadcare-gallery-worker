@@ -34,10 +34,11 @@ interface Env {
   
   // Optional accent colors (defaults provided if not set)
   SUCCESS_COLOR?: string         // Success/confirmation color (default: #16a34a green)
+  LINK_HOVER_COLOR?: string      // Link hover color (default: inherit = no change)
 }
 
 // Constants
-const VERSION = '1.1.4';
+const VERSION = '1.1.5';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default colors for optional env vars
@@ -46,6 +47,11 @@ const DEFAULT_SUCCESS_COLOR = '#16a34a';
 // Helper to get success color with fallback
 function getSuccessColor(env: Env): string {
   return env.SUCCESS_COLOR || DEFAULT_SUCCESS_COLOR;
+}
+
+// Helper to get link hover color with fallback
+function getLinkHoverColor(env: Env): string {
+  return env.LINK_HOVER_COLOR || 'inherit';
 }
 
 // Helper to generate font loading HTML
@@ -373,6 +379,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     :root {
       --brand-color: ${env.BRAND_COLOR};
       --success-color: ${getSuccessColor(env)};
+      --link-hover-color: ${getLinkHoverColor(env)};
       --brand-bg: #ffffff;
       --brand-panel: #f9fafb;
       --brand-surface: #f3f4f6;
@@ -547,7 +554,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .logo-link:hover .logo-svg {
-      color: var(--brand-color);
+      color: var(--link-hover-color);
     }
 
     .divider {
@@ -1253,7 +1260,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .footer-link:hover {
-      color: var(--text-primary);
+      color: var(--link-hover-color);
     }
 
     /* Responsive */
@@ -1824,6 +1831,7 @@ function generateErrorHtml(env: Env, error: string): string {
     :root {
       --brand-color: ${env.BRAND_COLOR};
       --success-color: ${getSuccessColor(env)};
+      --link-hover-color: ${getLinkHoverColor(env)};
       --brand-bg: #ffffff;
       --brand-panel: #f9fafb;
       --brand-surface: #f3f4f6;
@@ -1876,7 +1884,7 @@ function generateErrorHtml(env: Env, error: string): string {
       transition: color 0.3s;
     }
 
-    .logo-link:hover .logo-svg { color: var(--brand-color); }
+    .logo-link:hover .logo-svg { color: var(--link-hover-color); }
 
     .divider {
       height: 24px;
@@ -2016,7 +2024,7 @@ function generateErrorHtml(env: Env, error: string): string {
     }
 
     .footer-link:hover {
-      color: var(--text-primary);
+      color: var(--link-hover-color);
     }
 
     @media (max-width: 640px) {

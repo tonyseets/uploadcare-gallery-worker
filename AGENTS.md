@@ -39,6 +39,7 @@ interface Env {
   FONT_CSS_URL?: string      // Custom font CSS URL (skips Google Fonts)
   MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
   SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
+  LINK_HOVER_COLOR?: string  // Link hover color (default: inherit = no change)
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)

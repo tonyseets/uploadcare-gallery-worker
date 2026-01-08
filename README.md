@@ -85,6 +85,7 @@ All branding is controlled via environment variables in `wrangler.toml`:
 | `FONT_CSS_URL` | ⬜ | Custom font CSS URL (if set, skips Google Fonts) |
 | `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
 | `SUCCESS_COLOR` | ⬜ | Success/confirmation color (default: `#16a34a` green) |
+| `LINK_HOVER_COLOR` | ⬜ | Link hover color (default: `inherit` = no change) |
 
 ### Example Configuration
 

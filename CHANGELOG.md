@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.5] - 2026-01-07
+
+### Added
+
+- `LINK_HOVER_COLOR` env var to control link hover color (default: `inherit` = no change)
+
+### Changed
+
+- Logo and footer link hovers now use `--link-hover-color` CSS variable
+- By default, links don't change color on hover (cleaner look)
+- Set `LINK_HOVER_COLOR` to brand color if you want hover effects
+
 ## [1.1.4] - 2026-01-07
 
 ### Added

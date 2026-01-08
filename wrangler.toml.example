@@ -53,3 +53,4 @@ FONT_DISPLAY = "Inter"
 
 # Optional accent colors (uncomment to customize)
 # SUCCESS_COLOR = "#16a34a"  # Success/confirmation states (default: green)
+# LINK_HOVER_COLOR = "#0066FF"  # Link hover color (default: inherit = no change)
