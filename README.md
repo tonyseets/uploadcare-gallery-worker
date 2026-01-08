@@ -83,6 +83,7 @@ All branding is controlled via environment variables in `wrangler.toml`:
 | `FONT_BODY` | ✅ | Google Fonts family for body text |
 | `FONT_DISPLAY` | ✅ | Google Fonts family for headings |
 | `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
+| `SUCCESS_COLOR` | ⬜ | Success/confirmation color (default: `#16a34a` green) |
 
 ### Example Configuration
 

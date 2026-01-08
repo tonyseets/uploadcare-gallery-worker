@@ -44,3 +44,6 @@ FONT_DISPLAY = "Inter"
 # Behavior
 # Card click behavior: "download" (default) or "open" (opens in new tab)
 # MAIN_ACTION = "download"
+
+# Optional accent colors (uncomment to customize)
+# SUCCESS_COLOR = "#16a34a"  # Success/confirmation states (default: green)

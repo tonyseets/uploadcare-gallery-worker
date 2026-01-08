@@ -30,11 +30,22 @@ interface Env {
   
   // Behavior
   MAIN_ACTION?: string           // "download" (default) or "open" - what clicking card does
+  
+  // Optional accent colors (defaults provided if not set)
+  SUCCESS_COLOR?: string         // Success/confirmation color (default: #16a34a green)
 }
 
 // Constants
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 // No server-side file limit - configure limits in your Uploadcare project settings
+
+// Default colors for optional env vars
+const DEFAULT_SUCCESS_COLOR = '#16a34a';
+
+// Helper to get success color with fallback
+function getSuccessColor(env: Env): string {
+  return env.SUCCESS_COLOR || DEFAULT_SUCCESS_COLOR;
+}
 
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
 
@@ -349,6 +360,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
+      --success-color: ${getSuccessColor(env)};
       --brand-bg: #ffffff;
       --brand-panel: #f9fafb;
       --brand-surface: #f3f4f6;
@@ -494,9 +506,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .share-btn.copied {
-      color: #16a34a;
-      border-color: #16a34a;
-      background: rgba(22, 163, 74, 0.1);
+      color: var(--success-color);
+      border-color: var(--success-color);
+      background: color-mix(in srgb, var(--success-color) 10%, transparent);
     }
 
     .share-btn.copied .share-icon {
@@ -685,7 +697,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .tooltip-local {
-      color: #16a34a;
+      color: var(--success-color);
       font-weight: 500;
       font-size: 0.8125rem;
     }
@@ -726,8 +738,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .tooltip-copy.copied {
-      color: #16a34a;
-      border-color: rgba(22, 163, 74, 0.5);
+      color: var(--success-color);
+      border-color: color-mix(in srgb, var(--success-color) 50%, transparent);
     }
 
     .tooltip-convert {
@@ -1801,6 +1813,7 @@ function generateErrorHtml(env: Env, error: string): string {
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
+      --success-color: ${getSuccessColor(env)};
       --brand-bg: #ffffff;
       --brand-panel: #f9fafb;
       --brand-surface: #f3f4f6;
@@ -1893,15 +1906,15 @@ function generateErrorHtml(env: Env, error: string): string {
       justify-content: center;
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border: 1px solid #fcd34d;
+      background: color-mix(in srgb, var(--brand-color) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--brand-color) 30%, transparent);
       margin-bottom: 1.5rem;
     }
 
     .error-icon-wrap svg {
       width: 32px;
       height: 32px;
-      color: #b45309;
+      color: var(--brand-color);
     }
 
     .error-title {

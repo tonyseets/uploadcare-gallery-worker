@@ -37,6 +37,7 @@ interface Env {
   FONT_BODY: string          // Google Fonts body font
   FONT_DISPLAY: string       // Google Fonts display font
   MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
+  SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)
@@ -78,7 +79,7 @@ ALLOWED_CDN_HOSTS = "project1.ucarecdn.com,project2.ucarecdn.com"
 ### Modify Gallery UI
 
 All HTML/CSS is generated inline in `generateHtml()`. The gallery uses:
-- CSS variables for branding (`--brand-color`, `--brand-dark`, etc.)
+- CSS variables for branding (`--brand-color`, `--success-color`, etc.)
 - Google Fonts loaded from `env.FONT_BODY` and `env.FONT_DISPLAY`
 - Inline `<script>` for interactivity (ZIP download, tracking, etc.)
 

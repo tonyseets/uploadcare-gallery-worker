@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.3] - 2026-01-07
+
+### Added
+
+- `SUCCESS_COLOR` env var for customizable success/confirmation states (default: `#16a34a` green)
+- `--success-color` CSS variable for consistent theming
+
+### Changed
+
+- Error page icon now uses brand color instead of hardcoded amber/yellow
+- Success states (copied buttons, timestamps) now use `--success-color` CSS variable
+- Uses modern `color-mix()` for transparent color variations
+
+### Fixed
+
+- Hardcoded colors that broke white-label theming:
+  - Error page amber gradient → brand color at 12% opacity
+  - Error icon color → brand color
+  - Success green (`#16a34a`) → configurable via `SUCCESS_COLOR`
+
 ## [1.1.2] - 2026-01-07
 
 ### Changed
