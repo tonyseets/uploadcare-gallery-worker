@@ -58,10 +58,15 @@ interface Env {
   ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button (default: true)
   ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button (default: true)
   ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header (default: true)
+  ENABLE_LIGHTBOX?: string       // Enable lightbox for images/videos (default: true)
+  
+  // Gallery layout options
+  DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", "4" (default: "2")
+  IMAGE_FIT?: string             // Thumbnail fit: "contain" or "cover" (default: "contain")
 }
 
 // Constants
-const VERSION = '1.3.1';
+const VERSION = '1.4.0';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default CDN URLs
@@ -117,6 +122,25 @@ function getTextColor(env: Env): string { return env.TEXT_COLOR || '#111827'; }
 function getTextSecondaryColor(env: Env): string { return env.TEXT_SECONDARY_COLOR || '#6b7280'; }
 function getTextMutedColor(env: Env): string { return env.TEXT_MUTED_COLOR || '#9ca3af'; }
 function getHeaderBg(env: Env): string { return env.HEADER_BG || '#ffffffcc'; }
+
+// Grid layout helpers
+function getDefaultGridColumns(env: Env): number {
+  const cols = parseInt(env.DEFAULT_GRID_COLUMNS || '2', 10);
+  return [1, 2, 3, 4].includes(cols) ? cols : 2;
+}
+
+function getImageFit(env: Env): string {
+  return env.IMAGE_FIT === 'cover' ? 'cover' : 'contain';
+}
+
+function isLightboxEnabled(env: Env): boolean {
+  return env.ENABLE_LIGHTBOX !== 'false';
+}
+
+// Check if file can be previewed in lightbox (images + browser-native video formats)
+function isLightboxPreviewable(ext: string): boolean {
+  return isImageExtension(ext) || ['mp4', 'webm', 'mov'].includes(ext);
+}
 
 // Helper to generate font loading HTML
 // Uses custom CSS URL if provided, otherwise loads from Google Fonts
@@ -411,8 +435,16 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     const cardMainHref = mainActionIsOpen ? fileUrl : downloadUrl;
     const cardMainTarget = mainActionIsOpen ? ' target="_blank" rel="noopener noreferrer"' : '';
     
+    // Lightbox data for previewable files
+    const lightboxEnabled = isLightboxEnabled(env);
+    const canPreview = lightboxEnabled && isLightboxPreviewable(ext);
+    const isVideo = isVideoExtension(ext) && ['mp4', 'webm', 'mov'].includes(ext);
+    const lightboxAttrs = canPreview 
+      ? ` data-lightbox="true" data-lightbox-src="${fileUrl}" data-lightbox-download="${downloadUrl}" data-lightbox-video="${isVideo}" data-lightbox-name="${escapedName}"`
+      : '';
+    
     return `
-      <li class="file-card" data-index="${i}">
+      <li class="file-card" data-index="${i}"${lightboxAttrs}>
         <a href="${cardMainHref}"${cardMainTarget} class="card-main" title="${escapedName}">
           <div class="thumbnail-container">
             ${thumbnailHtml}
@@ -447,6 +479,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   <title>Attachments (${count} file${count > 1 ? 's' : ''}) - ${env.COMPANY_NAME}</title>
   <link rel="icon" href="${env.FAVICON_URL}">
   ${getFontLoadingHtml(env)}
+  <script>
+  (function(){
+    var c=localStorage.getItem('gallery-grid-columns');
+    if(c&&['1','2','3','4'].includes(c))
+      document.documentElement.style.setProperty('--grid-columns',c);
+  })();
+  </script>
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
@@ -459,6 +498,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       --text-primary: ${getTextColor(env)};
       --text-secondary: ${getTextSecondaryColor(env)};
       --text-muted: ${getTextMutedColor(env)};
+      --grid-columns: ${getDefaultGridColumns(env)};
+      --image-fit: ${getImageFit(env)};
     }
 
     * {
@@ -969,20 +1010,18 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     /* File grid */
     .file-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--grid-columns), 1fr);
       gap: 1.25rem;
       list-style: none;
     }
 
-    @media (max-width: 900px) {
-      .file-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
+    /* Only force 1-column on mobile */
     @media (max-width: 540px) {
       .file-grid {
         grid-template-columns: 1fr;
+      }
+      .grid-selector {
+        display: none;
       }
     }
 
@@ -1143,7 +1182,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     .thumbnail {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: var(--image-fit);
       transition: transform 0.3s ease;
     }
 
@@ -1408,6 +1447,269 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       color: var(--text-secondary);
       margin-bottom: 1.5rem;
     }
+
+    /* Grid selector dropdown */
+    .grid-selector {
+      position: relative;
+      display: inline-block;
+    }
+
+    .grid-selector-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .grid-selector-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+
+    .grid-selector-btn svg {
+      flex-shrink: 0;
+    }
+
+    .grid-selector-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      min-width: 120px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 0.15s, visibility 0.15s, transform 0.15s;
+    }
+
+    .grid-selector.open .grid-selector-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .grid-selector-menu button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+
+    .grid-selector-menu button:hover {
+      background: var(--brand-surface);
+      color: var(--text-primary);
+    }
+
+    .grid-selector-menu button.active {
+      color: var(--brand-color);
+      font-weight: 500;
+    }
+
+    .grid-selector-menu button .check-icon {
+      margin-left: auto;
+      opacity: 0;
+    }
+
+    .grid-selector-menu button.active .check-icon {
+      opacity: 1;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    .lightbox.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .lightbox-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+    }
+
+    .lightbox-container {
+      position: relative;
+      max-width: calc(100vw - 3rem);
+      max-height: calc(100vh - 3rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lightbox-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      max-height: calc(100vh - 6rem);
+    }
+
+    .lightbox-content img,
+    .lightbox-content video {
+      max-width: 100%;
+      max-height: calc(100vh - 6rem);
+      object-fit: contain;
+      border-radius: 0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .lightbox-content video {
+      background: #000;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -2.5rem;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .lightbox-actions {
+      position: absolute;
+      bottom: -2.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .lightbox-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: white;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lightbox-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lightbox-nav:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .lightbox-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .lightbox-nav.prev {
+      left: -3.5rem;
+    }
+
+    .lightbox-nav.next {
+      right: -3.5rem;
+    }
+
+    .lightbox-counter {
+      position: absolute;
+      top: -2.5rem;
+      left: 0;
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-family: '${env.FONT_DISPLAY}', monospace;
+    }
+
+    @media (max-width: 768px) {
+      .lightbox-nav.prev {
+        left: 0.5rem;
+        top: auto;
+        bottom: -3rem;
+        transform: none;
+      }
+
+      .lightbox-nav.next {
+        right: 0.5rem;
+        top: auto;
+        bottom: -3rem;
+        transform: none;
+      }
+
+      .lightbox-actions {
+        bottom: -3rem;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .lightbox-counter {
+        top: auto;
+        bottom: -3rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1458,6 +1760,18 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
           ` : ''}
         </div>
         ${count > 1 ? `<div class="meta-right">
+          <div class="grid-selector" id="grid-selector">
+            <button class="grid-selector-btn" aria-haspopup="true" aria-expanded="false" aria-label="Change grid columns">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span class="grid-selector-value">${getDefaultGridColumns(env)}</span>
+            </button>
+            <div class="grid-selector-menu" role="menu">
+              <button role="menuitem" data-cols="1">1 Column <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+              <button role="menuitem" data-cols="2">2 Columns <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+              <button role="menuitem" data-cols="3">3 Columns <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+              <button role="menuitem" data-cols="4">4 Columns <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+            </div>
+          </div>
           <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" class="source-btn" title="View original Uploadcare URL">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             Source
@@ -1873,7 +2187,243 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       
       btn.disabled = false;
     }
+
+    // Grid selector functionality
+    (function() {
+      const selector = document.getElementById('grid-selector');
+      if (!selector) return;
+      
+      const btn = selector.querySelector('.grid-selector-btn');
+      const menu = selector.querySelector('.grid-selector-menu');
+      const valueDisplay = selector.querySelector('.grid-selector-value');
+      const menuItems = menu.querySelectorAll('[data-cols]');
+      
+      // Get current column count from CSS variable
+      function getCurrentCols() {
+        return getComputedStyle(document.documentElement).getPropertyValue('--grid-columns').trim() || '${getDefaultGridColumns(env)}';
+      }
+      
+      // Update active state in menu
+      function updateActiveState() {
+        const currentCols = getCurrentCols();
+        menuItems.forEach(item => {
+          item.classList.toggle('active', item.dataset.cols === currentCols);
+        });
+        valueDisplay.textContent = currentCols;
+      }
+      
+      // Set column count
+      function setColumns(cols) {
+        document.documentElement.style.setProperty('--grid-columns', cols);
+        localStorage.setItem('gallery-grid-columns', cols);
+        updateActiveState();
+        selector.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        announce(cols + ' column' + (cols === '1' ? '' : 's') + ' view');
+      }
+      
+      // Toggle menu
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = selector.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen.toString());
+      });
+      
+      // Handle menu item clicks
+      menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+          setColumns(item.dataset.cols);
+        });
+      });
+      
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!selector.contains(e.target)) {
+          selector.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Keyboard navigation
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          selector.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Initialize active state
+      updateActiveState();
+    })();
+
+    // Lightbox functionality
+    (function() {
+      const lightbox = document.getElementById('lightbox');
+      if (!lightbox) return;
+      
+      const content = lightbox.querySelector('.lightbox-content');
+      const downloadBtn = lightbox.querySelector('.lightbox-download');
+      const openBtn = lightbox.querySelector('.lightbox-open');
+      const closeBtn = lightbox.querySelector('.lightbox-close');
+      const prevBtn = lightbox.querySelector('.lightbox-nav.prev');
+      const nextBtn = lightbox.querySelector('.lightbox-nav.next');
+      const counter = lightbox.querySelector('.lightbox-counter');
+      
+      // Get all lightbox-enabled cards
+      const cards = Array.from(document.querySelectorAll('[data-lightbox="true"]'));
+      let currentIndex = -1;
+      let previousFocus = null;
+      
+      function openLightbox(index) {
+        if (index < 0 || index >= cards.length) return;
+        
+        const card = cards[index];
+        const src = card.dataset.lightboxSrc;
+        const downloadUrl = card.dataset.lightboxDownload;
+        const isVideo = card.dataset.lightboxVideo === 'true';
+        const name = card.dataset.lightboxName;
+        
+        currentIndex = index;
+        previousFocus = document.activeElement;
+        
+        // Clear previous content
+        content.innerHTML = '';
+        
+        // Create media element
+        if (isVideo) {
+          const video = document.createElement('video');
+          video.src = src;
+          video.controls = true;
+          video.autoplay = true;
+          video.setAttribute('aria-label', name);
+          content.appendChild(video);
+        } else {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = name;
+          content.appendChild(img);
+        }
+        
+        // Update actions
+        downloadBtn.href = downloadUrl;
+        openBtn.href = src;
+        
+        // Update counter
+        if (counter) {
+          counter.textContent = (index + 1) + ' / ' + cards.length;
+        }
+        
+        // Update nav buttons
+        if (prevBtn) prevBtn.disabled = index === 0;
+        if (nextBtn) nextBtn.disabled = index === cards.length - 1;
+        
+        // Show lightbox
+        lightbox.classList.add('active');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        
+        // Focus close button
+        setTimeout(() => closeBtn.focus(), 100);
+        
+        announce('Viewing ' + name + ', ' + (index + 1) + ' of ' + cards.length);
+      }
+      
+      function closeLightbox() {
+        // Stop any playing video
+        const video = content.querySelector('video');
+        if (video) video.pause();
+        
+        lightbox.classList.remove('active');
+        lightbox.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        currentIndex = -1;
+        
+        // Restore focus
+        if (previousFocus) {
+          previousFocus.focus();
+          previousFocus = null;
+        }
+      }
+      
+      function navigate(direction) {
+        const newIndex = currentIndex + direction;
+        if (newIndex >= 0 && newIndex < cards.length) {
+          openLightbox(newIndex);
+        }
+      }
+      
+      // Event listeners
+      closeBtn.addEventListener('click', closeLightbox);
+      lightbox.querySelector('.lightbox-backdrop').addEventListener('click', closeLightbox);
+      
+      if (prevBtn) prevBtn.addEventListener('click', () => navigate(-1));
+      if (nextBtn) nextBtn.addEventListener('click', () => navigate(1));
+      
+      // Keyboard navigation
+      lightbox.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeLightbox();
+        } else if (e.key === 'ArrowLeft') {
+          navigate(-1);
+        } else if (e.key === 'ArrowRight') {
+          navigate(1);
+        } else if (e.key === 'Tab') {
+          // Focus trap
+          const focusable = lightbox.querySelectorAll('button:not(:disabled), a[href]');
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+      
+      // Wire up card clicks
+      cards.forEach((card, index) => {
+        const cardMain = card.querySelector('.card-main');
+        cardMain.addEventListener('click', (e) => {
+          e.preventDefault();
+          openLightbox(index);
+        });
+      });
+      
+      // Make openLightbox available globally for potential external use
+      window.openLightbox = openLightbox;
+      window.closeLightbox = closeLightbox;
+    })();
   </script>
+
+  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-container">
+      <span class="lightbox-counter"></span>
+      <button class="lightbox-close" aria-label="Close viewer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <button class="lightbox-nav prev" aria-label="Previous image">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="lightbox-content"></div>
+      <button class="lightbox-nav next" aria-label="Next image">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <div class="lightbox-actions">
+        <a class="lightbox-action lightbox-download" href="" download aria-label="Download file">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download
+        </a>
+        <a class="lightbox-action lightbox-open" href="" target="_blank" rel="noopener noreferrer" aria-label="Open in new tab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          Open
+        </a>
+      </div>
+    </div>
+  </div>` : ''}
 </body>
 </html>`;
 }

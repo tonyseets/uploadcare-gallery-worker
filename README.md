@@ -33,6 +33,7 @@ The gallery works with **any** Uploadcare group URL — whether it comes from We
 
 **Features:**
 - 🖼️ Thumbnail previews for all files
+- 🔍 Lightbox modal for images and videos
 - 📝 Real filenames (fetched from Uploadcare headers)
 - ⬇️ Download individual files or ZIP all
 - 🔗 Open all in tabs
@@ -40,7 +41,7 @@ The gallery works with **any** Uploadcare group URL — whether it comes from We
 - ✅ Session-based "viewed" tracking
 - 📍 Source page + timestamp metadata
 - 🎨 Fully white-labelable (your logo, colors, fonts)
-- 📱 Responsive design
+- 📱 Responsive design with configurable grid layout
 
 ## Quick Start
 
@@ -105,6 +106,17 @@ All branding is controlled via environment variables in `wrangler.toml`.
 |----------|---------|-------------|
 | `MAIN_ACTION` | `download` | Card click behavior: `download` or `open` |
 
+### Grid Layout (Optional)
+
+Control the gallery grid appearance:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEFAULT_GRID_COLUMNS` | `2` | Default columns: `1`, `2`, `3`, or `4` |
+| `IMAGE_FIT` | `contain` | Thumbnail fit: `contain` (letterbox) or `cover` (crop) |
+
+Users can change column count via the grid selector dropdown. Their preference is saved to `localStorage` and restored on future visits.
+
 ### Theme Colors (Optional)
 
 Set these to customize the color scheme (e.g., for dark themes). All color vars support any CSS color format (hex, rgba, hsl, etc.):
@@ -147,6 +159,20 @@ Disable specific UI features by setting to `"false"`:
 | `ENABLE_ZIP_DOWNLOAD` | `true` | Show "Download ZIP" button |
 | `ENABLE_OPEN_ALL` | `true` | Show "Open All in Tabs" button |
 | `ENABLE_SHARE_BUTTON` | `true` | Show "Share" button in header |
+| `ENABLE_LIGHTBOX` | `true` | Enable lightbox modal for images/videos |
+
+### Lightbox
+
+When enabled (default), clicking an image or video opens it in a fullscreen modal overlay:
+
+- **Supported images**: jpg, png, gif, webp, svg, bmp
+- **Supported videos**: mp4, webm, mov (browser-native formats)
+- **Other files**: Open in new tab (no lightbox)
+
+The lightbox includes:
+- Close button (X), backdrop click, or Escape key to close
+- Download button for quick file download
+- Full keyboard accessibility with focus trap
 
 ### Example Configuration
 

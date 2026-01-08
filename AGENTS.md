@@ -59,6 +59,10 @@ interface Env {
   ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button
   ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button
   ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header
+  ENABLE_LIGHTBOX?: string       // Enable lightbox modal for images/videos (default: true)
+  // Grid layout
+  DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", or "4" (default: "2")
+  IMAGE_FIT?: string             // Thumbnail fit: "contain" (letterbox) or "cover" (crop)
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)
@@ -100,9 +104,44 @@ ALLOWED_CDN_HOSTS = "project1.ucarecdn.com,project2.ucarecdn.com"
 ### Modify Gallery UI
 
 All HTML/CSS is generated inline in `generateHtml()`. The gallery uses:
-- CSS variables for branding (`--brand-color`, `--success-color`, etc.)
+- CSS variables for branding (`--brand-color`, `--success-color`, `--grid-columns`, `--image-fit`, etc.)
 - Fonts loaded via `getFontLoadingHtml()` — Google Fonts by default, or custom CSS via `FONT_CSS_URL`
-- Inline `<script>` for interactivity (ZIP download, tracking, etc.)
+- Inline `<script>` for interactivity (ZIP download, lightbox, tracking, etc.)
+- FOUC prevention script in `<head>` to apply saved grid preference before paint
+
+### Lightbox Modal
+
+The lightbox allows users to view images and videos in a fullscreen overlay without leaving the page.
+
+**Supported file types:**
+- Images: jpg, jpeg, png, gif, webp, svg, bmp (displayed as `<img>`)
+- Videos: mp4, webm, mov (displayed as `<video>` with controls)
+- Other files: Open in new tab (no lightbox preview)
+
+**Features:**
+- Backdrop blur effect
+- Close via: X button, backdrop click, or Escape key
+- Download button for quick file download
+- Focus trap for keyboard accessibility
+- Screen reader announcements
+
+**Configuration:**
+- `ENABLE_LIGHTBOX`: Set to `"false"` to disable lightbox entirely
+- When disabled, image/video clicks behave like before (download or open based on `MAIN_ACTION`)
+
+### Grid Layout
+
+The file grid supports 1-4 columns, configurable via environment and user preference.
+
+**Configuration:**
+- `DEFAULT_GRID_COLUMNS`: Set default to `"1"`, `"2"`, `"3"`, or `"4"` (default: `"2"`)
+- `IMAGE_FIT`: Set to `"contain"` (letterbox, shows full image) or `"cover"` (crops to fill)
+
+**User Preference:**
+- Grid selector dropdown in the meta row lets users choose their preferred column count
+- Preference saved to `localStorage` (`gallery-grid-columns`)
+- FOUC prevention script in `<head>` applies saved preference before first paint
+- Mobile always uses 1 column regardless of setting
 
 ### White-Label for Your Company
 
@@ -175,3 +214,7 @@ To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.
 3. **Session storage**: Opened/downloaded tracking uses `sessionStorage`, so it resets when the tab closes. This is intentional.
 
 4. **CORS on uc-gallery-connect.js**: Has `Access-Control-Allow-Origin: *` because it's loaded cross-origin from various sites.
+
+5. **Lightbox video formats**: Only mp4, webm, and mov are shown in lightbox (browser-native formats). Other video formats (avi, mkv, flv, etc.) open in new tab because browsers can't play them natively.
+
+6. **Grid preference localStorage**: User grid preference is stored in `localStorage` under key `gallery-grid-columns`. The FOUC prevention script reads this synchronously in `<head>` to prevent layout shift.

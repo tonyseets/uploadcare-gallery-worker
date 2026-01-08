@@ -79,3 +79,8 @@ FONT_DISPLAY = "Inter"
 # ENABLE_ZIP_DOWNLOAD = "true"    # Show "Download ZIP" button
 # ENABLE_OPEN_ALL = "true"        # Show "Open All in Tabs" button
 # ENABLE_SHARE_BUTTON = "true"    # Show "Share" button in header
+# ENABLE_LIGHTBOX = "true"        # Enable lightbox for images/videos
+
+# Gallery layout options
+# DEFAULT_GRID_COLUMNS = "2"      # Default columns: "1", "2", "3", or "4"
+# IMAGE_FIT = "contain"           # Thumbnail fit: "contain" (letterbox) or "cover" (crop)

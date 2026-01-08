@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.0] - 2026-01-08
+
+### Added
+
+- **Configurable grid layout** (`DEFAULT_GRID_COLUMNS`): Set default columns to 1, 2, 3, or 4 (default: 2)
+- **User grid preference**: Users can change grid columns via dropdown, preference saved to localStorage
+- **Image fit modes** (`IMAGE_FIT`): Choose `contain` (letterbox, default) or `cover` (crop to fill)
+- **Lightbox modal** (`ENABLE_LIGHTBOX`): Click images/videos to view in fullscreen modal overlay
+  - Supports images (jpg, png, gif, webp, svg, bmp) and browser-native videos (mp4, webm, mov)
+  - Keyboard accessible: Escape to close, Tab to cycle focus, Enter/Space to activate
+  - Download button in lightbox for quick file download
+  - Non-previewable files (PDFs, other video formats, documents) open in new tab as before
+
+### Technical
+
+- New CSS variables: `--grid-columns`, `--image-fit`
+- FOUC prevention script in `<head>` for instant grid column restoration from localStorage
+- New helper functions: `getDefaultGridColumns()`, `getImageFit()`, `isLightboxEnabled()`, `isLightboxPreviewable()`
+- Grid selector dropdown with accessible ARIA attributes
+- Lightbox with focus trap, backdrop blur, and screen reader announcements
+
 ## [1.3.1] - 2026-01-08
 
 ### Fixed
