@@ -27,6 +27,8 @@ This worker wraps those URLs in a clean gallery page:
 https://your-worker.workers.dev/?url=https://your-project.ucarecdn.com/...
 ```
 
+The gallery works with **any** Uploadcare group URL — whether it comes from Webflow, a custom app, your own backend, or anywhere else. Just pass the URL to the worker.
+
 **Features:**
 - 🖼️ Thumbnail previews for all files
 - 📝 Real filenames (fetched from Uploadcare headers)
@@ -101,25 +103,29 @@ FONT_DISPLAY = "Inter"
 | Path | Description | Caching |
 |------|-------------|---------|
 | `/?url=...` | Gallery viewer | 1 hour |
-| `/uploader.js` | Webflow integration script | CDN: 7 days |
+| `/uploader.js?v=X.X.X` | Client-side URL transformer | Immutable (use version for cache busting) |
 
-## Webflow Integration
+## Client-Side Integration
 
-The uploader script transforms Uploadcare group URLs into gallery URLs before form submission. You have several options for using it:
+The `/uploader.js` script transforms Uploadcare group URLs into gallery URLs before form submission. This is useful when you want the transformation to happen automatically on the client side.
 
-### Option 1: Load from Worker (Recommended)
+> **Note:** The included script is built for Webflow + Uploadcare's file uploader widget, but can be adapted for other platforms.
 
-Add this to your Webflow site (Settings → Custom Code → Footer):
+### Option 1: Load from Worker (Recommended for Webflow)
+
+Add this to your site's footer code:
 
 ```html
-<script src="https://your-worker.workers.dev/uploader.js"></script>
+<script src="https://your-worker.workers.dev/uploader.js?v=1.1.2"></script>
 ```
 
-**Pros:** Always up-to-date, no maintenance, `WORKER_URL` is injected automatically.
+**Important:** Update the `?v=` version parameter when upgrading to get the latest script. The script is cached aggressively (immutable), so changing the version busts the cache instantly.
+
+**Pros:** Simple setup, `WORKER_URL` is injected automatically, instant updates via version bump.
 
 ### Option 2: Inline the Script
 
-Copy the contents of [`webflow-snippet.js`](./webflow-snippet.js) directly into your Webflow custom code. Replace `__WORKER_URL__` with your actual worker URL:
+Copy the contents of [`uploader-snippet.js`](./uploader-snippet.js) directly into your site's custom code. Replace `__WORKER_URL__` with your actual worker URL:
 
 ```javascript
 const WORKER_URL = 'https://your-worker.workers.dev';
@@ -130,7 +136,7 @@ const WORKER_URL = 'https://your-worker.workers.dev';
 
 ### Option 3: Fork & Customize
 
-If you need custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `webflow-snippet.js` or the `WEBFLOW_SNIPPET` constant in `src/index.ts`.
+If you need custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `uploader-snippet.js` or the `UPLOADER_SNIPPET` constant in `src/index.ts`.
 
 ### What the Script Does
 
@@ -139,7 +145,7 @@ If you need custom behavior (different tracking, additional metadata, different 
 3. Adds metadata (source page slug, timestamp)
 4. Updates the form's hidden input
 
-Now when forms submit to HubSpot/etc., they contain gallery URLs instead of raw Uploadcare URLs.
+Now when forms submit to your CRM/backend, they contain gallery URLs instead of raw Uploadcare URLs.
 
 ## Security
 
@@ -171,8 +177,8 @@ npm run tail
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Webflow Form  │────▶│  uploader.js     │────▶│   Your CRM      │
-│   + Uploadcare  │     │  (transforms URL)│     │   (stores URL)  │
+│   Your Form     │────▶│  uploader.js     │────▶│   Your CRM/     │
+│   + Uploadcare  │     │  (transforms URL)│     │   Backend       │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                                           │
                                                           ▼
@@ -181,6 +187,8 @@ npm run tail
 │   CDN           │     │  (renders gallery)│    │   link          │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
+
+> **Without uploader.js:** You can skip the client-side script entirely and transform URLs server-side, or even manually prepend the worker URL when needed.
 
 ## Alternative Hosting
 

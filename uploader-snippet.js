@@ -6,10 +6,11 @@
  * The script is served from the worker at /uploader.js and automatically
  * uses the WORKER_URL configured in wrangler.toml [vars].
  * 
- * Webflow usage (Footer Code):
+ * Usage (add to your site's footer):
  * <script src="https://your-worker.workers.dev/uploader.js"></script>
  * 
  * Wraps Uploadcare group URLs with the gallery worker for a better viewing experience.
+ * Built for Webflow + Uploadcare widget, but can be adapted for other platforms.
  */
 (function() {
   // WORKER_URL is injected at runtime from env.WORKER_URL

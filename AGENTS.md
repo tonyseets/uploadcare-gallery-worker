@@ -5,7 +5,7 @@
 Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Two main functions:
 
 1. **Gallery Viewer** (`/?url=...`) — Renders HTML gallery for file groups
-2. **Uploader Script** (`/uploader.js`) — Client-side script for Webflow forms
+2. **Uploader Script** (`/uploader.js?v=X.X.X`) — Client-side script for Webflow forms
 
 **Fully white-labelable** via environment variables in `wrangler.toml`.
 
@@ -14,7 +14,7 @@ Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Tw
 | File | Purpose |
 |------|---------|
 | `src/index.ts` | Main worker code (all logic in one file) |
-| `webflow-snippet.js` | Reference copy of the uploader script (canonical version is in index.ts) |
+| `uploader-snippet.js` | Reference copy of the uploader script (canonical version is in index.ts) |
 | `wrangler.toml.example` | Template for configuration (copy to wrangler.toml) |
 | `wrangler.toml` | Local config (gitignored - contains your specific branding) |
 | `CHANGELOG.md` | Version history (update when making notable changes) |
@@ -61,10 +61,10 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 
 ## Common Tasks
 
-### Update the Webflow Script
+### Update the Uploader Script
 
-1. Edit the `WEBFLOW_SNIPPET` constant in `src/index.ts`
-2. Optionally update `webflow-snippet.js` for reference
+1. Edit the `UPLOADER_SNIPPET` constant in `src/index.ts`
+2. Optionally update `uploader-snippet.js` for reference
 3. Deploy: `npm run deploy`
 
 ### Add a New CDN Host
@@ -134,9 +134,8 @@ curl "http://localhost:8787/uploader.js"
 npm run deploy
 ```
 
-Note: `/uploader.js` is CDN-cached for 7 days. To force update:
-1. Purge cache in Cloudflare dashboard, OR
-2. Change the endpoint path (breaking change)
+Note: `/uploader.js` uses immutable caching with version-based cache busting.
+To push updates, bump the version in the embed URL: `/uploader.js?v=X.X.X`
 
 ## Dependencies
 
