@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.1] - 2026-01-08
+
+### Fixed
+
+- SVG fallback icons breaking HTML when thumbnail fails to load — double quotes in SVG attributes weren't escaped, causing malformed `onerror` handlers and `'" />` text appearing in file cards
+
 ## [1.3.0] - 2026-01-08
 
 ### Added

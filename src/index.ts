@@ -61,7 +61,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default CDN URLs
@@ -379,7 +379,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
               alt="${escapedName}" 
               class="thumbnail"
               loading="lazy"
-              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'").replace(/"/g, '&quot;')}</div>'"
             />`;
     } else if (isVideoExtension(ext)) {
       // Videos: Uploadcare extracts first frame automatically with preview
@@ -389,7 +389,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
               alt="${escapedName}" 
               class="thumbnail"
               loading="lazy"
-              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'").replace(/"/g, '&quot;')}</div>'"
             />`;
     } else if (isPdfExtension(ext)) {
       // PDFs: Uploadcare converts first page to image
@@ -399,7 +399,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
               alt="${escapedName}" 
               class="thumbnail"
               loading="lazy"
-              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'").replace(/"/g, '&quot;')}</div>'"
             />`;
     } else {
       // Non-previewable files: show SVG icon immediately (no wasted network request)
