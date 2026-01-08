@@ -105,16 +105,38 @@ FONT_DISPLAY = "Inter"
 
 ## Webflow Integration
 
+The uploader script transforms Uploadcare group URLs into gallery URLs before form submission. You have several options for using it:
+
+### Option 1: Load from Worker (Recommended)
+
 Add this to your Webflow site (Settings → Custom Code → Footer):
 
 ```html
 <script src="https://your-worker.workers.dev/uploader.js"></script>
 ```
 
-This automatically:
+**Pros:** Always up-to-date, no maintenance, `WORKER_URL` is injected automatically.
+
+### Option 2: Inline the Script
+
+Copy the contents of [`webflow-snippet.js`](./webflow-snippet.js) directly into your Webflow custom code. Replace `__WORKER_URL__` with your actual worker URL:
+
+```javascript
+const WORKER_URL = 'https://your-worker.workers.dev';
+```
+
+**Pros:** Full control, can customize behavior, no external dependency.  
+**Cons:** You manage updates manually.
+
+### Option 3: Fork & Customize
+
+If you need custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `webflow-snippet.js` or the `WEBFLOW_SNIPPET` constant in `src/index.ts`.
+
+### What the Script Does
+
 1. Listens for Uploadcare `group-created` events
 2. Transforms the raw CDN URL → your gallery URL
-3. Adds metadata (source page, timestamp)
+3. Adds metadata (source page slug, timestamp)
 4. Updates the form's hidden input
 
 Now when forms submit to HubSpot/etc., they contain gallery URLs instead of raw Uploadcare URLs.
@@ -159,6 +181,16 @@ npm run tail
 │   CDN           │     │  (renders gallery)│    │   link          │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
+
+## Alternative Hosting
+
+This project is built for **Cloudflare Workers** and deploys with `wrangler`. If you want to host on a different platform (Vercel Edge Functions, Deno Deploy, AWS Lambda@Edge, etc.), you'll need to adapt the code:
+
+- The worker uses Cloudflare's `Request`/`Response` APIs (standard Fetch API, so most platforms are compatible)
+- Environment variables are accessed via the `env` parameter in the fetch handler
+- No Cloudflare-specific APIs are used, so porting should be straightforward
+
+This isn't officially supported, but the codebase is simple enough to adapt.
 
 ## Dependencies
 
