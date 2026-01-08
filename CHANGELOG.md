@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.1] - 2026-01-08
+
+### Added
+
+- **Lightbox trigger button**: Expand icon appears in top-right corner of image/video cards on hover — click to open lightbox without triggering the default card action
+
+### Changed
+
+- **Buttons stack on narrow cards**: Download/Open buttons now wrap vertically when card is too narrow (e.g., 4-column grid)
+- **Grid selector hidden on mobile**: Since mobile always shows 1 column, the grid selector is now hidden at ≤540px
+
+### Removed
+
+- **Hover zoom on thumbnails**: Removed the scale(1.05) zoom effect on thumbnail hover — border highlight remains
+
 ## [1.4.0] - 2026-01-08
 
 ### Added

@@ -443,11 +443,19 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       ? ` data-lightbox="true" data-lightbox-src="${fileUrl}" data-lightbox-download="${downloadUrl}" data-lightbox-video="${isVideo}" data-lightbox-name="${escapedName}"`
       : '';
     
+    // Lightbox trigger button (only for previewable files)
+    const lightboxTriggerHtml = canPreview 
+      ? `<button class="lightbox-trigger" aria-label="View ${escapedName} in lightbox" data-lightbox-index="${i}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+        </button>`
+      : '';
+    
     return `
       <li class="file-card" data-index="${i}"${lightboxAttrs}>
         <a href="${cardMainHref}"${cardMainTarget} class="card-main" title="${escapedName}">
           <div class="thumbnail-container">
             ${thumbnailHtml}
+            ${lightboxTriggerHtml}
           </div>
           <div class="file-info">
             <span class="file-name" title="${escapedName}">${displayName}</span>
@@ -1020,9 +1028,6 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       .file-grid {
         grid-template-columns: 1fr;
       }
-      .grid-selector {
-        display: none;
-      }
     }
 
     .file-card {
@@ -1101,11 +1106,14 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .card-actions {
       display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
+      background: var(--brand-border);
       border-top: 1px solid var(--brand-border);
     }
 
     .card-action {
-      flex: 1;
+      flex: 1 1 80px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1117,10 +1125,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       text-decoration: none;
       position: relative;
       transition: all 0.2s;
-    }
-
-    .card-action:first-child {
-      border-right: 1px solid var(--brand-border);
+      background: var(--brand-bg);
     }
 
     /* Card hover highlights download (the default), fades open */
@@ -1177,17 +1182,45 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      position: relative;
+    }
+
+    .lightbox-trigger {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      background: rgba(0, 0, 0, 0.6);
+      border: none;
+      color: white;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+      z-index: 10;
+    }
+
+    .file-card:hover .lightbox-trigger {
+      opacity: 1;
+    }
+
+    .lightbox-trigger:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .lightbox-trigger:focus-visible {
+      opacity: 1;
+      outline: 2px solid white;
+      outline-offset: 2px;
     }
 
     .thumbnail {
       width: 100%;
       height: 100%;
       object-fit: var(--image-fit);
-      transition: transform 0.3s ease;
-    }
-
-    .file-card:hover .thumbnail {
-      transform: scale(1.05);
     }
 
     .fallback-icon {
@@ -1533,6 +1566,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .grid-selector-menu button.active .check-icon {
       opacity: 1;
+    }
+
+    /* Hide grid selector on mobile (always 1 column anyway) */
+    @media (max-width: 540px) {
+      .grid-selector {
+        display: none;
+      }
     }
 
     /* Lightbox */
@@ -2383,11 +2423,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         }
       });
       
-      // Wire up card clicks
-      cards.forEach((card, index) => {
-        const cardMain = card.querySelector('.card-main');
-        cardMain.addEventListener('click', (e) => {
+      // Wire up lightbox trigger button clicks
+      document.querySelectorAll('.lightbox-trigger').forEach(btn => {
+        btn.addEventListener('click', (e) => {
           e.preventDefault();
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.lightboxIndex, 10);
           openLightbox(index);
         });
       });

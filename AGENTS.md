@@ -119,6 +119,7 @@ The lightbox allows users to view images and videos in a fullscreen overlay with
 - Other files: Open in new tab (no lightbox preview)
 
 **Features:**
+- Expand button appears on hover in top-right corner of image/video cards
 - Backdrop blur effect
 - Close via: X button, backdrop click, or Escape key
 - Download button for quick file download
