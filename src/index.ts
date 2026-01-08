@@ -33,7 +33,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.1.1';
+const VERSION = '1.1.2';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
@@ -513,20 +513,6 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       align-items: center;
     }
 
-    .logo-link:hover .logo-glow {
-      opacity: 1;
-    }
-
-    .logo-glow {
-      position: absolute;
-      inset: -4px;
-      background: ${env.BRAND_COLOR}20;
-      border-radius: 0;
-      filter: blur(8px);
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-
     .logo-svg {
       height: 18px;
       width: auto;
@@ -910,7 +896,6 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .file-card:hover {
       border-color: var(--text-muted);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
 
@@ -1333,7 +1318,6 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     <div class="header-inner">
       <div class="logo-group">
         <a href="${env.COMPANY_URL}" target="_blank" rel="noopener noreferrer nofollow" class="logo-link">
-          <div class="logo-glow"></div>
           ${logoHtml}
         </a>
         <div class="divider"></div>
@@ -1860,18 +1844,6 @@ function generateErrorHtml(env: Env, error: string): string {
       align-items: center;
     }
 
-    .logo-link:hover .logo-glow { opacity: 1; }
-
-    .logo-glow {
-      position: absolute;
-      inset: -4px;
-      background: ${env.BRAND_COLOR}33;
-      border-radius: 0;
-      filter: blur(8px);
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-
     .logo-svg {
       height: 18px;
       width: auto;
@@ -2034,7 +2006,6 @@ function generateErrorHtml(env: Env, error: string): string {
   <header>
     <div class="header-inner">
       <a href="${env.COMPANY_URL}" target="_blank" rel="noopener noreferrer nofollow" class="logo-link">
-        <div class="logo-glow"></div>
         ${logoHtml}
       </a>
       <div class="divider"></div>
