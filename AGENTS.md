@@ -40,6 +40,15 @@ interface Env {
   MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
   SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
   LINK_HOVER_COLOR?: string  // Link hover color (default: inherit = no change)
+  // Theme colors (all optional - light theme defaults)
+  BG_COLOR?: string          // Page background (default: #ffffff)
+  PANEL_COLOR?: string       // Panel backgrounds (default: #f9fafb)
+  SURFACE_COLOR?: string     // Interactive surfaces (default: #f3f4f6)
+  BORDER_COLOR?: string      // Borders (default: #e5e7eb)
+  TEXT_COLOR?: string        // Primary text (default: #111827)
+  TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
+  TEXT_MUTED_COLOR?: string  // Muted text (default: #9ca3af)
+  HEADER_BG?: string         // Header background (default: rgba(255,255,255,0.8))
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)

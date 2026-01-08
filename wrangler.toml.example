@@ -54,3 +54,14 @@ FONT_DISPLAY = "Inter"
 # Optional accent colors (uncomment to customize)
 # SUCCESS_COLOR = "#16a34a"  # Success/confirmation states (default: green)
 # LINK_HOVER_COLOR = "#0066FF"  # Link hover color (default: inherit = no change)
+
+# Theme colors (all optional - defaults to light theme)
+# Customize these for dark themes or brand-specific styling
+# BG_COLOR = "#ffffff"              # Page background
+# PANEL_COLOR = "#f9fafb"           # Panel/card backgrounds
+# SURFACE_COLOR = "#f3f4f6"         # Interactive surfaces (hover states, etc.)
+# BORDER_COLOR = "#e5e7eb"          # Borders
+# TEXT_COLOR = "#111827"            # Primary text
+# TEXT_SECONDARY_COLOR = "#6b7280"  # Secondary text
+# TEXT_MUTED_COLOR = "#9ca3af"      # Muted/subtle text
+# HEADER_BG = "rgba(255,255,255,0.8)"  # Header background (supports rgba)

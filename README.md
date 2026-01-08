@@ -86,6 +86,14 @@ All branding is controlled via environment variables in `wrangler.toml`:
 | `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
 | `SUCCESS_COLOR` | ⬜ | Success/confirmation color (default: `#16a34a` green) |
 | `LINK_HOVER_COLOR` | ⬜ | Link hover color (default: `inherit` = no change) |
+| `BG_COLOR` | ⬜ | Page background (default: `#ffffff`) |
+| `PANEL_COLOR` | ⬜ | Panel/card backgrounds (default: `#f9fafb`) |
+| `SURFACE_COLOR` | ⬜ | Interactive surfaces (default: `#f3f4f6`) |
+| `BORDER_COLOR` | ⬜ | Borders (default: `#e5e7eb`) |
+| `TEXT_COLOR` | ⬜ | Primary text (default: `#111827`) |
+| `TEXT_SECONDARY_COLOR` | ⬜ | Secondary text (default: `#6b7280`) |
+| `TEXT_MUTED_COLOR` | ⬜ | Muted text (default: `#9ca3af`) |
+| `HEADER_BG` | ⬜ | Header background (default: `rgba(255,255,255,0.8)`) |
 
 ### Example Configuration
 

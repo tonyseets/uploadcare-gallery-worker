@@ -35,10 +35,20 @@ interface Env {
   // Optional accent colors (defaults provided if not set)
   SUCCESS_COLOR?: string         // Success/confirmation color (default: #16a34a green)
   LINK_HOVER_COLOR?: string      // Link hover color (default: inherit = no change)
+  
+  // Theme colors (all optional - sensible light theme defaults)
+  BG_COLOR?: string              // Page background (default: #ffffff)
+  PANEL_COLOR?: string           // Panel/card backgrounds (default: #f9fafb)
+  SURFACE_COLOR?: string         // Interactive surfaces (default: #f3f4f6)
+  BORDER_COLOR?: string          // Borders (default: #e5e7eb)
+  TEXT_COLOR?: string            // Primary text (default: #111827)
+  TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
+  TEXT_MUTED_COLOR?: string      // Muted text (default: #9ca3af)
+  HEADER_BG?: string             // Header background (default: rgba(255,255,255,0.8))
 }
 
 // Constants
-const VERSION = '1.1.5';
+const VERSION = '1.1.6';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default colors for optional env vars
@@ -53,6 +63,16 @@ function getSuccessColor(env: Env): string {
 function getLinkHoverColor(env: Env): string {
   return env.LINK_HOVER_COLOR || 'inherit';
 }
+
+// Theme color helpers with light theme defaults
+function getBgColor(env: Env): string { return env.BG_COLOR || '#ffffff'; }
+function getPanelColor(env: Env): string { return env.PANEL_COLOR || '#f9fafb'; }
+function getSurfaceColor(env: Env): string { return env.SURFACE_COLOR || '#f3f4f6'; }
+function getBorderColor(env: Env): string { return env.BORDER_COLOR || '#e5e7eb'; }
+function getTextColor(env: Env): string { return env.TEXT_COLOR || '#111827'; }
+function getTextSecondaryColor(env: Env): string { return env.TEXT_SECONDARY_COLOR || '#6b7280'; }
+function getTextMutedColor(env: Env): string { return env.TEXT_MUTED_COLOR || '#9ca3af'; }
+function getHeaderBg(env: Env): string { return env.HEADER_BG || 'rgba(255,255,255,0.8)'; }
 
 // Helper to generate font loading HTML
 // Uses custom CSS URL if provided, otherwise loads from Google Fonts
@@ -380,13 +400,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       --brand-color: ${env.BRAND_COLOR};
       --success-color: ${getSuccessColor(env)};
       --link-hover-color: ${getLinkHoverColor(env)};
-      --brand-bg: #ffffff;
-      --brand-panel: #f9fafb;
-      --brand-surface: #f3f4f6;
-      --brand-border: #e5e7eb;
-      --text-primary: #111827;
-      --text-secondary: #6b7280;
-      --text-muted: #9ca3af;
+      --brand-bg: ${getBgColor(env)};
+      --brand-panel: ${getPanelColor(env)};
+      --brand-surface: ${getSurfaceColor(env)};
+      --brand-border: ${getBorderColor(env)};
+      --text-primary: ${getTextColor(env)};
+      --text-secondary: ${getTextSecondaryColor(env)};
+      --text-muted: ${getTextMutedColor(env)};
     }
 
     * {
@@ -472,7 +492,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(255, 255, 255, 0.8);
+      background: ${getHeaderBg(env)};
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--brand-border);
     }
@@ -1832,13 +1852,13 @@ function generateErrorHtml(env: Env, error: string): string {
       --brand-color: ${env.BRAND_COLOR};
       --success-color: ${getSuccessColor(env)};
       --link-hover-color: ${getLinkHoverColor(env)};
-      --brand-bg: #ffffff;
-      --brand-panel: #f9fafb;
-      --brand-surface: #f3f4f6;
-      --brand-border: #e5e7eb;
-      --text-primary: #111827;
-      --text-secondary: #6b7280;
-      --text-muted: #9ca3af;
+      --brand-bg: ${getBgColor(env)};
+      --brand-panel: ${getPanelColor(env)};
+      --brand-surface: ${getSurfaceColor(env)};
+      --brand-border: ${getBorderColor(env)};
+      --text-primary: ${getTextColor(env)};
+      --text-secondary: ${getTextSecondaryColor(env)};
+      --text-muted: ${getTextMutedColor(env)};
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1854,7 +1874,7 @@ function generateErrorHtml(env: Env, error: string): string {
     }
 
     header {
-      background: rgba(255, 255, 255, 0.8);
+      background: ${getHeaderBg(env)};
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--brand-border);
     }
