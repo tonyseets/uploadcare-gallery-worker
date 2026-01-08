@@ -133,7 +133,17 @@ Add this to your site's footer code:
 
 **Important:** Update the `?v=` version parameter when upgrading to get the latest script. The script is cached aggressively (immutable), so changing the version busts the cache instantly.
 
-**Pros:** Simple setup, `WORKER_URL` is injected automatically, instant updates via version bump.
+**Pros:**
+- Simple one-line setup
+- `WORKER_URL` is injected automatically (no hardcoding)
+- Instant updates via version bump
+- CORS headers handled for you
+- No need to host the script yourself
+- Served from Cloudflare's edge (fast globally)
+
+**Cons:**
+- Depends on your worker being deployed and reachable
+- Script updates require changing the version parameter in your site
 
 ### Option 2: Inline the Script
 
@@ -146,9 +156,12 @@ const WORKER_URL = 'https://your-worker.workers.dev';
 **Pros:** Full control, can customize behavior, no external dependency.  
 **Cons:** You manage updates manually.
 
-### Option 3: Fork & Customize
+### Option 3: Self-Host or Fork & Customize
 
-If you need custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `uploader-snippet.js` or the `UPLOADER_SNIPPET` constant in `src/index.ts`.
+If you want full control, you can:
+
+- **Self-host:** Copy `uploader-snippet.js` to your own server/CDN and serve it from there. Replace `__WORKER_URL__` with your actual worker URL before hosting.
+- **Fork & customize:** For custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `uploader-snippet.js` or the `UPLOADER_SNIPPET` constant in `src/index.ts`.
 
 ### What the Script Does
 
