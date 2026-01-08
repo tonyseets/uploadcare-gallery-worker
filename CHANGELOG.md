@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Renamed `/uploader.js` → `/uc-gallery-connect.js` (better describes what it does)
-- Renamed `uploader-snippet.js` → `uc-gallery-connect.example.js`
+- Renamed `/uploader.js` → `/uc-gallery-connect.js` (the script connects Uploadcare uploads to the gallery, not an "uploader")
+- Renamed reference file to `uc-gallery-connect.example.js` (`.example.js` convention makes it clear this is a template, not the served file)
 - Renamed internal constant `WEBFLOW_SNIPPET` → `UC_GALLERY_CONNECT_SCRIPT`
 
 ## [1.1.6] - 2026-01-07
