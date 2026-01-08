@@ -44,7 +44,7 @@ interface Env {
   TEXT_COLOR?: string            // Primary text (default: #111827)
   TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
   TEXT_MUTED_COLOR?: string      // Muted text (default: #9ca3af)
-  HEADER_BG?: string             // Header background (default: rgba(255,255,255,0.8))
+  HEADER_BG?: string             // Header background (default: #ffffffcc)
 }
 
 // Constants
@@ -72,7 +72,7 @@ function getBorderColor(env: Env): string { return env.BORDER_COLOR || '#e5e7eb'
 function getTextColor(env: Env): string { return env.TEXT_COLOR || '#111827'; }
 function getTextSecondaryColor(env: Env): string { return env.TEXT_SECONDARY_COLOR || '#6b7280'; }
 function getTextMutedColor(env: Env): string { return env.TEXT_MUTED_COLOR || '#9ca3af'; }
-function getHeaderBg(env: Env): string { return env.HEADER_BG || 'rgba(255,255,255,0.8)'; }
+function getHeaderBg(env: Env): string { return env.HEADER_BG || '#ffffffcc'; }
 
 // Helper to generate font loading HTML
 // Uses custom CSS URL if provided, otherwise loads from Google Fonts

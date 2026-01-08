@@ -68,32 +68,56 @@ npm run deploy
 
 ## Configuration
 
-All branding is controlled via environment variables in `wrangler.toml`:
+All branding is controlled via environment variables in `wrangler.toml`.
+
+### Required
+
+| Variable | Description |
+|----------|-------------|
+| `ALLOWED_CDN_HOSTS` | Uploadcare CDN hostname(s), comma-separated |
+| `COMPANY_NAME` | Displayed in header and page title |
+| `COMPANY_URL` | Logo links here |
+| `WORKER_URL` | Full URL of your deployed worker |
+
+### Branding
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ALLOWED_CDN_HOSTS` | ✅ | Uploadcare CDN hostname(s), comma-separated |
-| `COMPANY_NAME` | ✅ | Displayed in UI and page title |
-| `COMPANY_URL` | ✅ | Logo links here |
-| `WORKER_URL` | ✅ | Full URL of your deployed worker |
-| `BRAND_COLOR` | ✅ | Primary color (hex, e.g., `#0066FF`) |
+| `BRAND_COLOR` | ✅ | Primary accent color (hex, e.g., `#0066FF`) |
 | `FAVICON_URL` | ✅ | URL to your favicon |
 | `LOGO_SVG` | ⬜ | Inline SVG logo (preferred) |
-| `LOGO_URL` | ⬜ | URL to logo image (fallback) |
-| `FONT_BODY` | ✅ | Font family name for body text |
-| `FONT_DISPLAY` | ✅ | Font family name for headings |
-| `FONT_CSS_URL` | ⬜ | Custom font CSS URL (if set, skips Google Fonts) |
-| `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
-| `SUCCESS_COLOR` | ⬜ | Success/confirmation color (default: `#16a34a` green) |
-| `LINK_HOVER_COLOR` | ⬜ | Link hover color (default: `inherit` = no change) |
-| `BG_COLOR` | ⬜ | Page background (default: `#ffffff`) |
-| `PANEL_COLOR` | ⬜ | Panel/card backgrounds (default: `#f9fafb`) |
-| `SURFACE_COLOR` | ⬜ | Interactive surfaces (default: `#f3f4f6`) |
-| `BORDER_COLOR` | ⬜ | Borders (default: `#e5e7eb`) |
-| `TEXT_COLOR` | ⬜ | Primary text (default: `#111827`) |
-| `TEXT_SECONDARY_COLOR` | ⬜ | Secondary text (default: `#6b7280`) |
-| `TEXT_MUTED_COLOR` | ⬜ | Muted text (default: `#9ca3af`) |
-| `HEADER_BG` | ⬜ | Header background (default: `rgba(255,255,255,0.8)`) |
+| `LOGO_URL` | ⬜ | URL to logo image (fallback if no SVG) |
+
+### Typography
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `FONT_BODY` | ✅ | Font family for body text (e.g., `Inter`) |
+| `FONT_DISPLAY` | ✅ | Font family for headings (e.g., `Inter`) |
+| `FONT_CSS_URL` | ⬜ | Custom font CSS URL (skips Google Fonts if set) |
+
+### Behavior
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAIN_ACTION` | `download` | Card click behavior: `download` or `open` |
+
+### Theme Colors (Optional)
+
+All colors use hex format. Set these to customize the color scheme (e.g., for dark themes):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SUCCESS_COLOR` | `#16a34a` | Success/confirmation color |
+| `LINK_HOVER_COLOR` | inherit | Link hover color |
+| `BG_COLOR` | `#ffffff` | Page background |
+| `PANEL_COLOR` | `#f9fafb` | Panel/card backgrounds |
+| `SURFACE_COLOR` | `#f3f4f6` | Interactive surfaces (hover states) |
+| `BORDER_COLOR` | `#e5e7eb` | Borders |
+| `TEXT_COLOR` | `#111827` | Primary text |
+| `TEXT_SECONDARY_COLOR` | `#6b7280` | Secondary text |
+| `TEXT_MUTED_COLOR` | `#9ca3af` | Muted text |
+| `HEADER_BG` | `#ffffffcc` | Header background (supports alpha via 8-digit hex) |
 
 ### Example Configuration
 

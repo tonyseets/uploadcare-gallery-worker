@@ -48,7 +48,7 @@ interface Env {
   TEXT_COLOR?: string        // Primary text (default: #111827)
   TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
   TEXT_MUTED_COLOR?: string  // Muted text (default: #9ca3af)
-  HEADER_BG?: string         // Header background (default: rgba(255,255,255,0.8))
+  HEADER_BG?: string         // Header background (default: #ffffffcc)
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)

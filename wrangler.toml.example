@@ -64,4 +64,4 @@ FONT_DISPLAY = "Inter"
 # TEXT_COLOR = "#111827"            # Primary text
 # TEXT_SECONDARY_COLOR = "#6b7280"  # Secondary text
 # TEXT_MUTED_COLOR = "#9ca3af"      # Muted/subtle text
-# HEADER_BG = "rgba(255,255,255,0.8)"  # Header background (supports rgba)
+# HEADER_BG = "#ffffffcc"              # Header background (8-digit hex for alpha)
