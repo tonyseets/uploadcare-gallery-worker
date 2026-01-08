@@ -160,7 +160,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   const fileCards = fileInfos.map((file, i) => {
     const fileUrl = file.url;
     // For thumbnails, use Uploadcare's image transformations
-    const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/300x200/-/quality/lighter/`;
+    // Size: 1200x750 covers ~400px display @ 3x retina, quality: smart auto-optimizes
+    const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/1200x750/-/quality/smart/-/format/auto/`;
     const displayName = file.filename;
     // Escape HTML entities in filename for title attribute
     const escapedName = displayName.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
