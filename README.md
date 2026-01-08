@@ -1,0 +1,171 @@
+# Uploadcare Gallery Worker
+
+A Cloudflare Worker that transforms raw Uploadcare group URLs into a beautiful, branded file gallery.
+
+![Gallery Preview](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+## The Problem
+
+When users upload files via Uploadcare (e.g., on Webflow forms), the URLs look like this:
+
+```
+https://your-project.ucarecdn.com/20a62b9a-96be-4782-9016-6a82ce5ef6c7~3/
+```
+
+These land in your CRM, helpdesk, notifications, or wherever forms submit — and look terrible. No preview, no filenames, just a cryptic UUID.
+
+## The Solution
+
+This worker wraps those URLs in a clean gallery page:
+
+```
+https://your-worker.workers.dev/?url=https://your-project.ucarecdn.com/...
+```
+
+**Features:**
+- 🖼️ Thumbnail previews for all files
+- 📝 Real filenames (fetched from Uploadcare headers)
+- ⬇️ Download individual files or ZIP all
+- 🔗 Open all in tabs
+- ✅ Session-based "viewed" tracking
+- 📍 Source page + timestamp metadata
+- 🎨 Fully white-labelable (your logo, colors, fonts)
+- 📱 Responsive design
+
+## Quick Start
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/yourusername/uploadcare-gallery-worker.git
+cd uploadcare-gallery-worker
+npm install
+```
+
+### 2. Configure
+
+```bash
+cp wrangler.toml.example wrangler.toml
+```
+
+Edit `wrangler.toml` with your:
+- Cloudflare account ID
+- Uploadcare CDN hostname
+- Company branding (name, colors, logo, fonts)
+
+### 3. Deploy
+
+```bash
+npm run deploy
+```
+
+## Configuration
+
+All branding is controlled via environment variables in `wrangler.toml`:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ALLOWED_CDN_HOSTS` | ✅ | Uploadcare CDN hostname(s), comma-separated |
+| `COMPANY_NAME` | ✅ | Displayed in UI and page title |
+| `COMPANY_URL` | ✅ | Logo links here |
+| `WORKER_URL` | ✅ | Full URL of your deployed worker |
+| `BRAND_COLOR` | ✅ | Primary color (hex, e.g., `#0066FF`) |
+| `FAVICON_URL` | ✅ | URL to your favicon |
+| `LOGO_SVG` | ⬜ | Inline SVG logo (preferred) |
+| `LOGO_URL` | ⬜ | URL to logo image (fallback) |
+| `FONT_BODY` | ✅ | Google Fonts family for body text |
+| `FONT_DISPLAY` | ✅ | Google Fonts family for headings |
+
+### Example Configuration
+
+```toml
+[vars]
+ALLOWED_CDN_HOSTS = "abc123.ucarecdn.com"
+COMPANY_NAME = "Acme Corp"
+COMPANY_URL = "https://acme.com"
+WORKER_URL = "https://files.acme.workers.dev"
+BRAND_COLOR = "#FF6600"  # Your brand's accent color
+FAVICON_URL = "https://acme.com/favicon.ico"
+LOGO_URL = "https://acme.com/logo.png"
+FONT_BODY = "Inter"
+FONT_DISPLAY = "Inter"
+```
+
+## Endpoints
+
+| Path | Description | Caching |
+|------|-------------|---------|
+| `/?url=...` | Gallery viewer | 1 hour |
+| `/uploader.js` | Webflow integration script | CDN: 7 days |
+
+## Webflow Integration
+
+Add this to your Webflow site (Settings → Custom Code → Footer):
+
+```html
+<script src="https://your-worker.workers.dev/uploader.js"></script>
+```
+
+This automatically:
+1. Listens for Uploadcare `group-created` events
+2. Transforms the raw CDN URL → your gallery URL
+3. Adds metadata (source page, timestamp)
+4. Updates the form's hidden input
+
+Now when forms submit to HubSpot/etc., they contain gallery URLs instead of raw Uploadcare URLs.
+
+## Security
+
+| Feature | Implementation |
+|---------|----------------|
+| **CDN Allowlist** | Only URLs from configured `ALLOWED_CDN_HOSTS` are accepted |
+| **URL Validation** | Strict regex matching for Uploadcare group URL format |
+| **File Count Limit** | Max 50 files per group |
+| **No Indexing** | `noindex, nofollow` meta tags |
+| **CORS** | Only enabled for `/uploader.js` endpoint |
+
+## Development
+
+```bash
+# Start local dev server
+npm run dev
+
+# Type check
+npx tsc --noEmit
+
+# Deploy to Cloudflare
+npm run deploy
+
+# View live logs
+npm run tail
+```
+
+## How It Works
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Webflow Form  │────▶│  uploader.js     │────▶│   Your CRM      │
+│   + Uploadcare  │     │  (transforms URL)│     │   (stores URL)  │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                                                          │
+                                                          ▼
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Uploadcare    │◀────│  This Worker     │◀────│   User clicks   │
+│   CDN           │     │  (renders gallery)│    │   link          │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+```
+
+## Dependencies
+
+- **Runtime**: None (pure Cloudflare Workers)
+- **Client-side**: JSZip (loaded from CDN for ZIP downloads)
+- **Dev**: TypeScript, Wrangler
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contributing
+
+Contributions welcome! Please open an issue first to discuss proposed changes.

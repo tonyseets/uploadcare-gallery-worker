@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Wrangler
+.wrangler/
+.dev.vars
+
+# Local config (contains your specific branding/account - use wrangler.toml.example as template)
+wrangler.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output
+dist/

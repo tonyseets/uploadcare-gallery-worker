@@ -1,0 +1,42 @@
+# Uploadcare Gallery Worker - Configuration
+# Copy this file to wrangler.toml and fill in your values
+
+name = "uploadcare-gallery"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = "your-cloudflare-account-id"
+workers_dev = true
+
+# Custom domain (optional) - uncomment after adding DNS record in Cloudflare dashboard
+# [[routes]]
+# pattern = "attachments.yourdomain.com"
+# custom_domain = true
+
+# =============================================================================
+# White-Label Configuration
+# =============================================================================
+# All branding is configured here. Update these values for your company.
+
+[vars]
+# CDN hosts allowed (comma-separated for multiple Uploadcare CDNs)
+# Find yours in Uploadcare dashboard → Project → CDN CNAME
+ALLOWED_CDN_HOSTS = "your-project.ucarecdn.com"
+
+# Company branding
+COMPANY_NAME = "Your Company"
+COMPANY_URL = "https://yourcompany.com"
+WORKER_URL = "https://uploadcare-gallery.your-subdomain.workers.dev"
+
+# Visual branding (accent color for buttons, links, etc.)
+BRAND_COLOR = "#000000"
+FAVICON_URL = "https://yourcompany.com/favicon.ico"
+
+# Logo: Use LOGO_SVG for inline SVG (preferred) or LOGO_URL for image URL
+# If neither is set, COMPANY_NAME will be displayed as text
+LOGO_SVG = ""
+LOGO_URL = "https://yourcompany.com/logo.png"
+
+# Typography (Google Fonts family names)
+# Browse: https://fonts.google.com
+FONT_BODY = "Inter"
+FONT_DISPLAY = "Inter"

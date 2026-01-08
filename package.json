@@ -1,0 +1,25 @@
+{
+  "name": "uploadcare-gallery-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that transforms Uploadcare group URLs into a branded gallery viewer",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "uploadcare",
+    "gallery",
+    "file-viewer",
+    "webflow"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^4.54.0"
+  }
+}
