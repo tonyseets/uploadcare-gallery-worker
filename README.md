@@ -34,6 +34,7 @@ The gallery works with **any** Uploadcare group URL — whether it comes from We
 - 📝 Real filenames (fetched from Uploadcare headers)
 - ⬇️ Download individual files or ZIP all
 - 🔗 Open all in tabs
+- 📋 Share button (copy gallery URL to clipboard)
 - ✅ Session-based "viewed" tracking
 - 📍 Source page + timestamp metadata
 - 🎨 Fully white-labelable (your logo, colors, fonts)
