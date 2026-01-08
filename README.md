@@ -29,6 +29,8 @@ https://your-worker.workers.dev/?url=https://your-project.ucarecdn.com/...
 
 The gallery works with **any** Uploadcare group URL — whether it comes from Webflow, a custom app, your own backend, or anywhere else. Just pass the URL to the worker.
 
+> **Note:** Single-file URLs (`uuid~1`) are also supported for compatibility. Some integrations always append `~1` even for single files, and the gallery handles this gracefully.
+
 **Features:**
 - 🖼️ Thumbnail previews for all files
 - 📝 Real filenames (fetched from Uploadcare headers)
@@ -119,6 +121,32 @@ Set these to customize the color scheme (e.g., for dark themes). All color vars 
 | `TEXT_SECONDARY_COLOR` | `#6b7280` | Secondary text |
 | `TEXT_MUTED_COLOR` | `#9ca3af` | Muted text |
 | `HEADER_BG` | `#ffffffcc` | Header background (supports alpha via 8-digit hex) |
+
+### CDN URLs (Optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JSZIP_URL` | cdnjs URL | JSZip library URL - self-host or use alternate CDN |
+
+### Cache Control (Optional)
+
+Control caching behavior (values in seconds as strings):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CACHE_GALLERY_SECONDS` | `3600` | Gallery page cache (1 hour) |
+| `CACHE_SCRIPT_BROWSER_SECONDS` | `86400` | Script browser cache (1 day) |
+| `CACHE_SCRIPT_CDN_SECONDS` | `604800` | Script CDN cache (7 days) |
+
+### Feature Toggles (Optional)
+
+Disable specific UI features by setting to `"false"`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_ZIP_DOWNLOAD` | `true` | Show "Download ZIP" button |
+| `ENABLE_OPEN_ALL` | `true` | Show "Open All in Tabs" button |
+| `ENABLE_SHARE_BUTTON` | `true` | Show "Share" button in header |
 
 ### Example Configuration
 

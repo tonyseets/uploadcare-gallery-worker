@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.0] - 2026-01-08
+
+### Added
+
+- **JSZip URL env var** (`JSZIP_URL`): Self-host JSZip or use an alternate CDN instead of the default cdnjs
+- **Feature toggles**: Disable specific UI components via env vars:
+  - `ENABLE_ZIP_DOWNLOAD` - Show/hide "Download ZIP" button
+  - `ENABLE_OPEN_ALL` - Show/hide "Open All in Tabs" button
+  - `ENABLE_SHARE_BUTTON` - Show/hide "Share" button in header
+- **Cache duration env vars**: Fine-tune caching behavior:
+  - `CACHE_GALLERY_SECONDS` - Gallery page cache (default: 3600 = 1 hour)
+  - `CACHE_SCRIPT_BROWSER_SECONDS` - Script browser cache (default: 86400 = 1 day)
+  - `CACHE_SCRIPT_CDN_SECONDS` - Script CDN cache (default: 604800 = 7 days)
+- **Single-file URL support**: URLs with `~1` (single file) are now explicitly supported for compatibility with integrations that always append the count suffix
+
+### Technical
+
+- New helper functions: `getJsZipUrl()`, `getGalleryCacheSeconds()`, `getScriptBrowserCacheSeconds()`, `getScriptCdnCacheSeconds()`, `isFeatureEnabled()`
+- Conditional rendering for ZIP download button, Open All button, and Share button based on feature toggles
+- JSZip script tag only included when ZIP download is enabled
+
 ## [1.2.0] - 2026-01-07
 
 ### Changed

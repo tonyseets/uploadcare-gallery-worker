@@ -45,11 +45,32 @@ interface Env {
   TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
   TEXT_MUTED_COLOR?: string      // Muted text (default: #9ca3af)
   HEADER_BG?: string             // Header background (default: #ffffffcc)
+  
+  // CDN URLs (optional - sensible defaults provided)
+  JSZIP_URL?: string             // JSZip library URL (default: cdnjs)
+  
+  // Cache control (seconds as strings - env vars are always strings)
+  CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1 hour)
+  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 86400 = 1 day)
+  CACHE_SCRIPT_CDN_SECONDS?: string     // Script CDN cache (default: 604800 = 7 days)
+  
+  // Feature toggles ("true"/"false" as strings, default: "true" = enabled)
+  ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button (default: true)
+  ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button (default: true)
+  ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header (default: true)
 }
 
 // Constants
-const VERSION = '1.1.6';
+const VERSION = '1.3.0';
 // No server-side file limit - configure limits in your Uploadcare project settings
+
+// Default CDN URLs
+const DEFAULT_JSZIP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+
+// Default cache durations (in seconds)
+const DEFAULT_GALLERY_CACHE_SECONDS = 3600;      // 1 hour
+const DEFAULT_SCRIPT_BROWSER_CACHE_SECONDS = 86400;   // 1 day
+const DEFAULT_SCRIPT_CDN_CACHE_SECONDS = 604800;      // 7 days
 
 // Default colors for optional env vars
 const DEFAULT_SUCCESS_COLOR = '#16a34a';
@@ -62,6 +83,29 @@ function getSuccessColor(env: Env): string {
 // Helper to get link hover color with fallback
 function getLinkHoverColor(env: Env): string {
   return env.LINK_HOVER_COLOR || 'inherit';
+}
+
+// Helper to get JSZip URL with fallback
+function getJsZipUrl(env: Env): string {
+  return env.JSZIP_URL || DEFAULT_JSZIP_URL;
+}
+
+// Cache duration helpers
+function getGalleryCacheSeconds(env: Env): number {
+  return parseInt(env.CACHE_GALLERY_SECONDS || String(DEFAULT_GALLERY_CACHE_SECONDS), 10);
+}
+
+function getScriptBrowserCacheSeconds(env: Env): number {
+  return parseInt(env.CACHE_SCRIPT_BROWSER_SECONDS || String(DEFAULT_SCRIPT_BROWSER_CACHE_SECONDS), 10);
+}
+
+function getScriptCdnCacheSeconds(env: Env): number {
+  return parseInt(env.CACHE_SCRIPT_CDN_SECONDS || String(DEFAULT_SCRIPT_CDN_CACHE_SECONDS), 10);
+}
+
+// Feature toggle helper - returns true unless explicitly set to "false"
+function isFeatureEnabled(value: string | undefined): boolean {
+  return value !== 'false';
 }
 
 // Theme color helpers with light theme defaults
@@ -87,6 +131,9 @@ function getFontLoadingHtml(env: Env): string {
   <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(env.FONT_BODY)}:wght@300;400;500;600&family=${encodeURIComponent(env.FONT_DISPLAY)}:wght@400;500;700&display=swap" rel="stylesheet">`;
 }
 
+// URL pattern matches both group URLs (uuid~N where N>1) and single-file URLs (uuid~1)
+// Single-file URLs (uuid~1) are supported for compatibility - some integrations always append ~1
+// even for single files. The gallery works fine with count=1.
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
 
 type ValidationResult =
@@ -296,6 +343,11 @@ async function fetchFileInfos(host: string, groupId: string, count: number): Pro
 
 function generateHtml(env: Env, host: string, groupId: string, count: number, originalUrl: string, pageSlug: string, timestamp: number | null, fileInfos: FileInfo[]): string {
   const baseUrl = `https://${host}/${groupId}~${count}`;
+  
+  // Feature toggles
+  const enableZipDownload = isFeatureEnabled(env.ENABLE_ZIP_DOWNLOAD);
+  const enableOpenAll = isFeatureEnabled(env.ENABLE_OPEN_ALL);
+  const enableShareButton = isFeatureEnabled(env.ENABLE_SHARE_BUTTON);
   
   // Extract domain from company URL for display
   const companyDomain = env.COMPANY_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -1374,11 +1426,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         <div class="divider"></div>
         <span class="page-title">ATTACHMENTS</span>
       </div>
-      <button id="share-btn" class="share-btn" aria-label="Copy link to clipboard">
+      ${enableShareButton ? `<button id="share-btn" class="share-btn" aria-label="Copy link to clipboard">
         <svg class="share-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
         <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
         <span class="share-text" aria-hidden="true">Share</span>
-      </button>
+      </button>` : ''}
     </div>
   </header>
 
@@ -1418,16 +1470,16 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       ${fileCards}
     </ul>
 
-    ${count > 1 ? `<div class="actions">
+    ${count > 1 && (enableZipDownload || enableOpenAll) ? `<div class="actions">
       <div class="actions-left">
-        <button onclick="downloadAllFiles()" class="btn btn-primary">
+        ${enableZipDownload ? `<button onclick="downloadAllFiles()" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line class="download-arrow" x1="12" y1="11" x2="12" y2="17"></line><polyline class="download-arrow" points="9 14 12 17 15 14"></polyline></svg>
           Download ZIP (${count} files)
-        </button>
-        <button onclick="openAllFiles()" class="btn btn-secondary">
+        </button>` : ''}
+        ${enableOpenAll ? `<button onclick="openAllFiles()" class="btn btn-secondary">
           <svg class="grid-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           Open All in Tabs
-        </button>
+        </button>` : ''}
         <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-source-mobile" title="View original Uploadcare URL">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           View Source
@@ -1460,7 +1512,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  ${enableZipDownload ? `<script src="${getJsZipUrl(env)}"></script>` : ''}
   <script>
     // Screen reader announcements helper
     function announce(message, assertive = false) {
@@ -2155,7 +2207,7 @@ export default {
         status: 200,
         headers: {
           'Content-Type': 'application/javascript; charset=UTF-8',
-          'Cache-Control': 'public, max-age=86400, s-maxage=604800', // Browser: 1 day, CDN: 7 days
+          'Cache-Control': `public, max-age=${getScriptBrowserCacheSeconds(env)}, s-maxage=${getScriptCdnCacheSeconds(env)}`,
           'Access-Control-Allow-Origin': '*'
         }
       });
@@ -2200,7 +2252,7 @@ export default {
       status: 200,
       headers: {
         'Content-Type': 'text/html;charset=UTF-8',
-        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+        'Cache-Control': `public, max-age=${getGalleryCacheSeconds(env)}`
       }
     });
   }

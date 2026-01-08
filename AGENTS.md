@@ -49,6 +49,16 @@ interface Env {
   TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
   TEXT_MUTED_COLOR?: string  // Muted text (default: #9ca3af)
   HEADER_BG?: string         // Header background (default: #ffffffcc)
+  // CDN URLs
+  JSZIP_URL?: string         // JSZip library URL (default: cdnjs)
+  // Cache control (seconds as strings)
+  CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1hr)
+  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 86400 = 1 day)
+  CACHE_SCRIPT_CDN_SECONDS?: string     // Script CDN cache (default: 604800 = 7 days)
+  // Feature toggles ("true"/"false", default: "true")
+  ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button
+  ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button
+  ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)
@@ -160,7 +170,7 @@ To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.
 
 1. **File info fetching**: Uses HEAD requests to get Content-Disposition headers. If Uploadcare changes their API, filenames may break.
 
-2. **JSZip CDN**: The ZIP functionality depends on `cdnjs.cloudflare.com`. If it's down, ZIP downloads fail (individual downloads still work).
+2. **JSZip CDN**: The ZIP functionality depends on JSZip loaded from a CDN (default: `cdnjs.cloudflare.com`). If it's down, ZIP downloads fail (individual downloads still work). Use `JSZIP_URL` env var to self-host or use an alternate CDN.
 
 3. **Session storage**: Opened/downloaded tracking uses `sessionStorage`, so it resets when the tab closes. This is intentional.
 

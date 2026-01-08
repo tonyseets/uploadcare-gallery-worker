@@ -64,4 +64,18 @@ FONT_DISPLAY = "Inter"
 # TEXT_COLOR = "#111827"            # Primary text
 # TEXT_SECONDARY_COLOR = "#6b7280"  # Secondary text
 # TEXT_MUTED_COLOR = "#9ca3af"      # Muted/subtle text
-# HEADER_BG = "#ffffffcc"              # Header background (8-digit hex for alpha)
+# HEADER_BG = "#ffffffcc"           # Header background (8-digit hex for alpha)
+
+# CDN URLs (optional - sensible defaults provided)
+# Self-host JSZip or use an alternative CDN if needed
+# JSZIP_URL = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+
+# Cache control in seconds (optional - defaults shown)
+# CACHE_GALLERY_SECONDS = "3600"           # Gallery page: 1 hour
+# CACHE_SCRIPT_BROWSER_SECONDS = "86400"   # Script browser cache: 1 day
+# CACHE_SCRIPT_CDN_SECONDS = "604800"      # Script CDN cache: 7 days
+
+# Feature toggles - set to "false" to disable (all enabled by default)
+# ENABLE_ZIP_DOWNLOAD = "true"    # Show "Download ZIP" button
+# ENABLE_OPEN_ALL = "true"        # Show "Open All in Tabs" button
+# ENABLE_SHARE_BUTTON = "true"    # Show "Share" button in header
