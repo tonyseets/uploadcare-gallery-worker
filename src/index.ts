@@ -213,10 +213,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
-      --brand-dark: #0E0F0D;
-      --brand-panel: #151614;
-      --brand-surface: #1C1D1B;
-      --brand-border: #2A2B28;
+      --brand-bg: #ffffff;
+      --brand-panel: #f9fafb;
+      --brand-surface: #f3f4f6;
+      --brand-border: #e5e7eb;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
     }
 
     * {
@@ -231,10 +234,10 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     body {
       font-family: '${env.FONT_BODY}', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--brand-dark);
-      background-image: radial-gradient(circle at 50% 0%, ${env.BRAND_COLOR}14, transparent 40%);
+      background-color: var(--brand-bg);
+      background-image: radial-gradient(circle at 50% 0%, ${env.BRAND_COLOR}08, transparent 40%);
       background-attachment: fixed;
-      color: #e5e5e5;
+      color: var(--text-primary);
       min-height: 100%;
       line-height: 1.5;
       display: flex;
@@ -250,7 +253,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(21, 22, 20, 0.8);
+      background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--brand-border);
     }
@@ -285,7 +288,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-size: 0.8rem;
       font-weight: 500;
       font-family: inherit;
-      color: #9ca3af;
+      color: var(--text-secondary);
       background: transparent;
       border: 1px solid var(--brand-border);
       cursor: pointer;
@@ -293,9 +296,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .share-btn:hover {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
-      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+      background: var(--brand-surface);
     }
 
     .share-btn .check-icon {
@@ -303,9 +306,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .share-btn.copied {
-      color: #22c55e;
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+      border-color: #16a34a;
+      background: rgba(22, 163, 74, 0.1);
     }
 
     .share-btn.copied .share-icon {
@@ -329,7 +332,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     .logo-glow {
       position: absolute;
       inset: -4px;
-      background: ${env.BRAND_COLOR}33;
+      background: ${env.BRAND_COLOR}20;
       border-radius: 0;
       filter: blur(8px);
       opacity: 0;
@@ -341,7 +344,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       width: auto;
       position: relative;
       z-index: 10;
-      color: white;
+      color: var(--text-primary);
       transition: color 0.3s;
     }
 
@@ -360,7 +363,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-size: 0.875rem;
       font-weight: 500;
       letter-spacing: 0.05em;
-      color: #9ca3af;
+      color: var(--text-secondary);
     }
 
     /* Main content */
@@ -385,7 +388,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-family: '${env.FONT_DISPLAY}', sans-serif;
       font-size: 1.5rem;
       font-weight: 600;
-      color: white;
+      color: var(--text-primary);
       margin-bottom: 0.25rem;
     }
 
@@ -402,12 +405,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: #9ca3af;
+      color: var(--text-secondary);
       font-size: 0.875rem;
     }
 
     .meta-left a {
-      color: white;
+      color: var(--text-primary);
       text-decoration: none;
       font-family: '${env.FONT_DISPLAY}', monospace;
     }
@@ -420,15 +423,15 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .meta-left a:hover .slug-text {
-      text-decoration-color: white;
+      text-decoration-color: var(--text-primary);
     }
 
     .meta-dot {
-      color: #4b5563;
+      color: var(--text-muted);
     }
 
     .meta-label {
-      color: #6b7280;
+      color: var(--text-secondary);
     }
 
     .ts-short {
@@ -447,12 +450,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       top: 100%;
       left: 50%;
       transform: translateX(-50%) translateY(-4px);
-      background: var(--brand-panel);
+      background: var(--brand-bg);
       border: 1px solid var(--brand-border);
       padding: 0.5rem 0.75rem;
       margin-top: 10px;
       z-index: 100;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
@@ -479,7 +482,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       transform: translateX(-50%) rotate(45deg);
       width: 8px;
       height: 8px;
-      background: var(--brand-panel);
+      background: var(--brand-bg);
       border-left: 1px solid var(--brand-border);
       border-top: 1px solid var(--brand-border);
     }
@@ -502,19 +505,19 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       }
 
       .timestamp-wrap:hover .timestamp-text {
-        text-decoration-color: white;
-        color: white;
+        text-decoration-color: var(--text-primary);
+        color: var(--text-primary);
       }
     }
 
     .tooltip-local {
-      color: #22c55e;
+      color: #16a34a;
       font-weight: 500;
       font-size: 0.8125rem;
     }
 
     .tooltip-tz {
-      color: #6b7280;
+      color: var(--text-secondary);
       font-size: 0.6875rem;
       margin-top: 0.1875rem;
     }
@@ -536,7 +539,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       justify-content: center;
       width: 24px;
       height: 24px;
-      color: #6b7280;
+      color: var(--text-secondary);
       background: none;
       border: 1px solid var(--brand-border);
       cursor: pointer;
@@ -544,13 +547,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .tooltip-copy:hover {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
     }
 
     .tooltip-copy.copied {
-      color: #22c55e;
-      border-color: rgba(34, 197, 94, 0.5);
+      color: #16a34a;
+      border-color: rgba(22, 163, 74, 0.5);
     }
 
     .tooltip-convert {
@@ -559,7 +562,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       justify-content: center;
       gap: 0.3rem;
       padding: 0.25rem 0.5rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       font-size: 0.6875rem;
       text-decoration: none !important;
       background: none;
@@ -568,8 +571,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .tooltip-convert:hover {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
     }
 
     .timestamp-text {
@@ -578,13 +581,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       text-decoration-color: var(--brand-color);
       text-underline-offset: 3px;
       cursor: pointer;
-      color: #9ca3af;
+      color: var(--text-secondary);
       transition: text-decoration-color 0.15s, color 0.15s;
     }
 
     .timestamp-wrap:has(.timestamp-tooltip.active) .timestamp-text {
-      text-decoration-color: white;
-      color: white !important;
+      text-decoration-color: var(--text-primary);
+      color: var(--text-primary) !important;
     }
 
     .meta-right {
@@ -600,7 +603,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       padding: 0.35rem 0.65rem;
       font-size: 0.75rem;
       font-weight: 500;
-      color: #6b7280;
+      color: var(--text-secondary);
       text-decoration: none;
       background: var(--brand-surface);
       border: 1px solid var(--brand-border);
@@ -608,8 +611,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .source-btn:hover {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
     }
 
     .btn.btn-source-mobile {
@@ -626,7 +629,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-weight: 500;
       background: var(--brand-surface);
       border: 1px solid var(--brand-border);
-      color: #9ca3af;
+      color: var(--text-secondary);
     }
 
     .pill-counter {
@@ -641,8 +644,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .pill-counter:hover {
-      border-color: rgba(255, 255, 255, 0.5);
-      color: white;
+      border-color: var(--text-muted);
+      color: var(--text-primary);
     }
 
     .reset-btn {
@@ -650,9 +653,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       align-items: center;
       gap: 0.35rem;
       background: var(--brand-panel);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--brand-border);
       border-radius: 0;
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--text-secondary);
       cursor: pointer;
       font-family: inherit;
       font-size: 0.75rem;
@@ -664,9 +667,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .reset-btn:hover:not(:disabled) {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
-      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+      background: var(--brand-surface);
     }
 
     .reset-btn:disabled {
@@ -674,7 +677,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       cursor: not-allowed;
       background: var(--brand-surface);
       border-color: var(--brand-border);
-      color: #6b7280;
+      color: var(--text-muted);
     }
 
     .reset-btn svg {
@@ -708,7 +711,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     .file-card {
       display: flex;
       flex-direction: column;
-      background: var(--brand-panel);
+      background: var(--brand-bg);
       border: 1px solid var(--brand-border);
       border-radius: 0;
       overflow: hidden;
@@ -717,8 +720,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .file-card:hover {
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 0 0 20px -5px rgba(255, 255, 255, 0.15);
+      border-color: var(--text-muted);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
 
@@ -733,7 +736,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       display: none;
       position: absolute;
       right: 0.6rem;
-      color: #6b7280;
+      color: var(--text-muted);
     }
 
     .file-card.opened .open-action .action-check {
@@ -763,7 +766,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     /* Bulk action hover previews */
     body.bulk-download-preview .download-action {
       background: var(--brand-surface);
-      color: white;
+      color: var(--text-primary);
     }
 
     body.bulk-download-preview .open-action {
@@ -772,7 +775,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     body.bulk-open-preview .open-action {
       background: var(--brand-surface);
-      color: white;
+      color: var(--text-primary);
       opacity: 1;
     }
 
@@ -794,7 +797,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       padding: 0.6rem;
       font-size: 0.75rem;
       font-weight: 500;
-      color: #9ca3af;
+      color: var(--text-secondary);
       text-decoration: none;
       position: relative;
       transition: all 0.2s;
@@ -807,7 +810,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     /* Card hover highlights download (the default), fades open */
     .file-card:hover .download-action {
       background: var(--brand-surface);
-      color: white;
+      color: var(--text-primary);
     }
 
     .file-card:hover .open-action {
@@ -817,7 +820,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     /* Hovering open directly: open goes white, download fades */
     .file-card:hover .open-action:hover {
       background: var(--brand-surface);
-      color: white;
+      color: var(--text-primary);
       opacity: 1;
     }
 
@@ -825,7 +828,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     .file-card:hover:has(.open-action:hover) .download-action {
       opacity: 0.5;
       background: transparent;
-      color: #9ca3af;
+      color: var(--text-secondary);
     }
 
     .open-action .arrow-part {
@@ -886,7 +889,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .file-name {
       font-weight: 500;
-      color: white;
+      color: var(--text-primary);
       font-size: 0.875rem;
       white-space: nowrap;
       overflow: hidden;
@@ -955,13 +958,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .btn-secondary {
       background: var(--brand-surface);
-      color: #e5e5e5;
+      color: var(--text-primary);
       border: 1px solid var(--brand-border);
     }
 
     .btn-secondary:hover {
       background: var(--brand-panel);
-      border-color: rgba(255, 255, 255, 0.5);
+      border-color: var(--text-muted);
     }
 
     .btn-secondary .grid-icon {
@@ -974,14 +977,14 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .btn-ghost {
       background: transparent;
-      color: #e5e5e5;
+      color: var(--text-primary);
       border: 1px solid var(--brand-border);
       margin-left: auto;
     }
 
     .btn-ghost:hover {
-      color: white;
-      border-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
       background: var(--brand-surface);
     }
 
@@ -1009,7 +1012,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     /* Footer */
     footer {
-      border-top: 1px solid rgba(42, 43, 40, 0.5);
+      border-top: 1px solid var(--brand-border);
       margin-top: auto;
     }
 
@@ -1030,20 +1033,20 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
     .footer-version {
       font-size: 0.75rem;
-      color: #4b5563;
+      color: var(--text-muted);
       font-family: '${env.FONT_DISPLAY}', monospace;
     }
 
     .footer-link {
       font-size: 0.75rem;
-      color: #4b5563;
+      color: var(--text-muted);
       font-family: '${env.FONT_DISPLAY}', monospace;
       text-decoration: none;
       transition: color 0.2s;
     }
 
     .footer-link:hover {
-      color: white;
+      color: var(--text-primary);
     }
 
     /* Responsive */
@@ -1079,13 +1082,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         display: inline-flex;
         background: transparent;
         border: 1px solid var(--brand-border);
-        color: #6b7280;
+        color: var(--text-secondary);
       }
 
       .btn.btn-source-mobile:hover {
         background: var(--brand-surface);
-        border-color: rgba(255, 255, 255, 0.3);
-        color: #9ca3af;
+        border-color: var(--text-muted);
+        color: var(--text-primary);
         box-shadow: none;
       }
 
@@ -1111,12 +1114,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-family: '${env.FONT_DISPLAY}', sans-serif;
       font-size: 1.5rem;
       font-weight: 600;
-      color: white;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
     }
 
     .error-message {
-      color: #9ca3af;
+      color: var(--text-secondary);
       margin-bottom: 1.5rem;
     }
   </style>
@@ -1563,25 +1566,28 @@ function generateErrorHtml(env: Env, error: string): string {
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
-      --brand-dark: #0E0F0D;
-      --brand-panel: #151614;
-      --brand-border: #2A2B28;
+      --brand-bg: #ffffff;
+      --brand-panel: #f9fafb;
+      --brand-border: #e5e7eb;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: '${env.FONT_BODY}', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--brand-dark);
-      background-image: radial-gradient(circle at 50% 0%, ${env.BRAND_COLOR}14, transparent 40%);
-      color: #e5e5e5;
+      background-color: var(--brand-bg);
+      background-image: radial-gradient(circle at 50% 0%, ${env.BRAND_COLOR}08, transparent 40%);
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
     header {
-      background: rgba(21, 22, 20, 0.8);
+      background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--brand-border);
     }
@@ -1617,7 +1623,7 @@ function generateErrorHtml(env: Env, error: string): string {
     .logo-svg {
       height: 18px;
       width: auto;
-      color: white;
+      color: var(--text-primary);
       position: relative;
       z-index: 10;
       transition: color 0.3s;
@@ -1636,7 +1642,7 @@ function generateErrorHtml(env: Env, error: string): string {
       font-size: 0.875rem;
       font-weight: 500;
       letter-spacing: 0.05em;
-      color: #9ca3af;
+      color: var(--text-secondary);
     }
 
     .error-container {
@@ -1655,12 +1661,12 @@ function generateErrorHtml(env: Env, error: string): string {
       font-family: '${env.FONT_DISPLAY}', sans-serif;
       font-size: 1.5rem;
       font-weight: 600;
-      color: white;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
     }
 
     .error-message {
-      color: #9ca3af;
+      color: var(--text-secondary);
       margin-bottom: 1.5rem;
       max-width: 400px;
     }
@@ -1705,20 +1711,20 @@ function generateErrorHtml(env: Env, error: string): string {
 
     .footer-version {
       font-size: 0.75rem;
-      color: #4b5563;
+      color: var(--text-muted);
       font-family: '${env.FONT_DISPLAY}', monospace;
     }
 
     .footer-link {
       font-size: 0.75rem;
-      color: #4b5563;
+      color: var(--text-muted);
       font-family: '${env.FONT_DISPLAY}', monospace;
       text-decoration: none;
       transition: color 0.2s;
     }
 
     .footer-link:hover {
-      color: white;
+      color: var(--text-primary);
     }
 
     @media (max-width: 640px) {
