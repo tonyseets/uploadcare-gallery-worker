@@ -30,7 +30,7 @@ interface Env {
   FONT_CSS_URL?: string          // Custom font CSS URL (if set, skips Google Fonts)
   
   // Behavior
-  MAIN_ACTION?: string           // "download" (default) or "open" - what clicking card does
+  MAIN_ACTION?: string           // "lightbox" (default), "download", or "open" - card click behavior
   
   // Optional accent colors (defaults provided if not set)
   SUCCESS_COLOR?: string         // Success/confirmation color (default: #16a34a green)
@@ -66,7 +66,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.4.0';
+const VERSION = '1.4.4';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default CDN URLs
@@ -135,6 +135,26 @@ function getImageFit(env: Env): string {
 
 function isLightboxEnabled(env: Env): boolean {
   return env.ENABLE_LIGHTBOX !== 'false';
+}
+
+// Get effective main action, with fallback logic
+// Returns "lightbox" (default when enabled), "download", or "open"
+function getMainAction(env: Env): 'lightbox' | 'download' | 'open' {
+  const action = env.MAIN_ACTION || 'lightbox';
+  const lightboxEnabled = isLightboxEnabled(env);
+  
+  // If lightbox requested but disabled, fallback to download
+  if (action === 'lightbox' && !lightboxEnabled) {
+    return 'download';
+  }
+  
+  // Validate action value
+  if (['lightbox', 'download', 'open'].includes(action)) {
+    return action as 'lightbox' | 'download' | 'open';
+  }
+  
+  // Invalid value: use sensible default
+  return lightboxEnabled ? 'lightbox' : 'download';
 }
 
 // Check if file can be previewed in lightbox (images + browser-native video formats)
@@ -430,14 +450,16 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       thumbnailHtml = `<div class="fallback-icon">${getFileTypeIconSvg(ext)}</div>`;
     }
     
-    // Determine main action: download (default) or open
-    const mainActionIsOpen = env.MAIN_ACTION === 'open';
-    const cardMainHref = mainActionIsOpen ? fileUrl : downloadUrl;
-    const cardMainTarget = mainActionIsOpen ? ' target="_blank" rel="noopener noreferrer"' : '';
-    
     // Lightbox data for previewable files
     const lightboxEnabled = isLightboxEnabled(env);
     const canPreview = lightboxEnabled && isLightboxPreviewable(ext);
+    
+    // Determine main action for this card
+    const mainAction = getMainAction(env);
+    // For non-previewable files with lightbox action, fall back to download
+    const effectiveAction = (mainAction === 'lightbox' && !canPreview) ? 'download' : mainAction;
+    const cardMainHref = effectiveAction === 'open' ? fileUrl : downloadUrl;
+    const cardMainTarget = effectiveAction === 'open' ? ' target="_blank" rel="noopener noreferrer"' : '';
     const isVideo = isVideoExtension(ext) && ['mp4', 'webm', 'mov'].includes(ext);
     const lightboxAttrs = canPreview 
       ? ` data-lightbox="true" data-lightbox-src="${fileUrl}" data-lightbox-download="${downloadUrl}" data-lightbox-video="${isVideo}" data-lightbox-name="${escapedName}"`
@@ -1671,29 +1693,43 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       flex-shrink: 0;
     }
 
-    .lightbox-download {
+    .lightbox-download,
+    .lightbox-share {
       position: fixed;
       bottom: 1.5rem;
-      left: 50%;
-      transform: translateX(-50%);
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
       padding: 0.5rem 1rem;
       font-size: 0.875rem;
       font-weight: 500;
-      color: white;
-      background: var(--brand-color);
-      border: none;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
       text-decoration: none;
       cursor: pointer;
       transition: all 0.15s;
       z-index: 10;
     }
 
-    .lightbox-download:hover {
-      filter: brightness(1.1);
-      box-shadow: 0 0 20px -5px var(--brand-color);
+    .lightbox-download {
+      right: calc(50% + 0.25rem);
+    }
+
+    .lightbox-share {
+      left: calc(50% + 0.25rem);
+    }
+
+    .lightbox-download:hover,
+    .lightbox-share:hover {
+      background: var(--brand-surface);
+      border-color: var(--text-muted);
+    }
+
+    .lightbox-share.copied {
+      color: var(--success-color);
+      border-color: var(--success-color);
     }
 
     .lightbox-filename {
@@ -1904,6 +1940,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       Download
     </a>
+    <button class="lightbox-share" aria-label="Copy link to this file">
+      <svg class="share-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+      <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      Share
+    </button>
     <div class="lightbox-container">
       <button class="lightbox-nav prev" aria-label="Previous image">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -2016,9 +2057,26 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     // Track clicks on file cards
+    const mainAction = '${getMainAction(env)}';
     document.querySelectorAll('.file-card').forEach((card) => {
       const index = parseInt(card.dataset.index, 10);
-      card.querySelector('.card-main').addEventListener('click', () => ${env.MAIN_ACTION === 'open' ? 'markFileOpened' : 'markFileDownloaded'}(index));
+      const cardMain = card.querySelector('.card-main');
+      const hasLightbox = card.dataset.lightbox === 'true';
+      // For card-main clicks: lightbox mode doesn't trigger download/open tracking (lightbox handles that),
+      // but for non-lightbox files or when mainAction is download/open, track appropriately
+      cardMain.addEventListener('click', () => {
+        if (mainAction === 'lightbox' && hasLightbox) {
+          // Lightbox opens - no download/open tracking here (user may or may not download)
+          return;
+        }
+        // Non-lightbox card in lightbox mode falls back to download
+        // Or explicit download/open mode
+        if (mainAction === 'open') {
+          markFileOpened(index);
+        } else {
+          markFileDownloaded(index);
+        }
+      });
       card.querySelector('.open-action').addEventListener('click', () => markFileOpened(index));
       card.querySelector('.download-action').addEventListener('click', () => markFileDownloaded(index));
     });
@@ -2352,6 +2410,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       
       const content = lightbox.querySelector('.lightbox-content');
       const downloadBtn = lightbox.querySelector('.lightbox-download');
+      const shareBtn = lightbox.querySelector('.lightbox-share');
       const closeBtn = lightbox.querySelector('.lightbox-close');
       const prevBtn = lightbox.querySelector('.lightbox-nav.prev');
       const nextBtn = lightbox.querySelector('.lightbox-nav.next');
@@ -2456,6 +2515,28 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         }
       }
       
+      // Share button - copy gallery URL with file param
+      if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set('file', String(currentIndex));
+          try {
+            await navigator.clipboard.writeText(url.toString());
+            shareBtn.classList.add('copied');
+            shareBtn.querySelector('.share-icon').style.display = 'none';
+            shareBtn.querySelector('.check-icon').style.display = '';
+            announce('Link copied to clipboard');
+            setTimeout(() => {
+              shareBtn.classList.remove('copied');
+              shareBtn.querySelector('.share-icon').style.display = '';
+              shareBtn.querySelector('.check-icon').style.display = 'none';
+            }, 2000);
+          } catch (err) {
+            console.error('Copy failed:', err);
+          }
+        });
+      }
+      
       function navigate(direction) {
         const newIndex = currentIndex + direction;
         if (newIndex >= 0 && newIndex < cards.length) {
@@ -2504,21 +2585,35 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         });
       });
       
-      // Wire up card-main clicks to open lightbox for previewable files
-      document.querySelectorAll('.file-card[data-lightbox="true"] .card-main').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const card = link.closest('.file-card');
-          const cardIndex = cards.indexOf(card);
-          if (cardIndex >= 0) {
-            openLightbox(cardIndex);
-          }
+      // Wire up card-main clicks to open lightbox for previewable files (only when mainAction is lightbox)
+      const mainAction = '${getMainAction(env)}';
+      if (mainAction === 'lightbox') {
+        document.querySelectorAll('.file-card[data-lightbox="true"] .card-main').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const card = link.closest('.file-card');
+            const cardIndex = cards.indexOf(card);
+            if (cardIndex >= 0) {
+              openLightbox(cardIndex);
+            }
+          });
         });
-      });
+      }
       
       // Make openLightbox available globally for potential external use
       window.openLightbox = openLightbox;
       window.closeLightbox = closeLightbox;
+      
+      // Auto-open lightbox if ?file=N param is present
+      const urlParams = new URLSearchParams(window.location.search);
+      const fileParam = urlParams.get('file');
+      if (fileParam !== null) {
+        const fileIndex = parseInt(fileParam, 10);
+        if (!isNaN(fileIndex) && fileIndex >= 0 && fileIndex < cards.length) {
+          // Delay slightly to ensure DOM is ready
+          setTimeout(() => openLightbox(fileIndex), 100);
+        }
+      }
     })();
   </script>
 </body>

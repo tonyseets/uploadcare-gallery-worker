@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.4] - 2026-01-08
+
+### Changed
+
+- **`MAIN_ACTION` default is now `"lightbox"`**: Clicking an image/video card opens the lightbox by default
+- **New `MAIN_ACTION="lightbox"` option**: Explicitly set lightbox as the card click behavior
+- **Graceful fallback**: If `MAIN_ACTION="lightbox"` but lightbox is disabled (`ENABLE_LIGHTBOX="false"`), falls back to download
+- **Non-previewable files**: When `MAIN_ACTION="lightbox"`, non-previewable files (PDFs, docs, etc.) fall back to download
+- **Lightbox trigger button always works**: The expand button in the card corner opens lightbox regardless of `MAIN_ACTION` setting
+
+### Technical
+
+- New `getMainAction()` helper function with fallback logic
+- Card click tracking updated to handle all three modes correctly
+- Lightbox card-main click interception now conditional on `mainAction === 'lightbox'`
+
+## [1.4.3] - 2026-01-08
+
+### Added
+
+- **Lightbox share button**: Copy gallery URL with `?file=N` param to share specific file
+- **Auto-open lightbox**: Gallery opens lightbox automatically when `?file=N` param is present
+
+### Changed
+
+- **Lightbox button styling**: Download/Share buttons now use page background color with border (not brand color), no hover shadow - cleaner look that works on any image
+
 ## [1.4.2] - 2026-01-08
 
 ### Changed

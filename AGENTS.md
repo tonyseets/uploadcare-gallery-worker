@@ -37,7 +37,7 @@ interface Env {
   FONT_BODY: string          // Body text font family name
   FONT_DISPLAY: string       // Headings font family name
   FONT_CSS_URL?: string      // Custom font CSS URL (skips Google Fonts)
-  MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
+  MAIN_ACTION?: string       // "lightbox" (default), "download", or "open" - card click behavior
   SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
   LINK_HOVER_COLOR?: string  // Link hover color (default: inherit = no change)
   // Theme colors (all optional - light theme defaults)
@@ -123,12 +123,22 @@ The lightbox allows users to view images and videos in a fullscreen overlay with
 - Backdrop blur effect
 - Close via: X button, backdrop click, or Escape key
 - Download button for quick file download
+- Share button copies gallery URL with `?file=N` param
+- Auto-opens to specific file when `?file=N` param is present
 - Focus trap for keyboard accessibility
 - Screen reader announcements
 
 **Configuration:**
 - `ENABLE_LIGHTBOX`: Set to `"false"` to disable lightbox entirely
-- When disabled, image/video clicks behave like before (download or open based on `MAIN_ACTION`)
+- `MAIN_ACTION`: Controls card click behavior:
+  - `"lightbox"` (default): Clicking card opens lightbox for previewable files
+  - `"download"`: Clicking card downloads file (lightbox still accessible via expand button)
+  - `"open"`: Clicking card opens file in new tab (lightbox still accessible via expand button)
+
+**Fallback behavior:**
+- If `MAIN_ACTION="lightbox"` but `ENABLE_LIGHTBOX="false"`, falls back to download
+- If `MAIN_ACTION="lightbox"` on non-previewable file (PDF, doc), falls back to download
+- The expand button in card corner always opens lightbox (regardless of `MAIN_ACTION`) when lightbox is enabled
 
 ### Grid Layout
 
@@ -219,3 +229,18 @@ To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.
 5. **Lightbox video formats**: Only mp4, webm, and mov are shown in lightbox (browser-native formats). Other video formats (avi, mkv, flv, etc.) open in new tab because browsers can't play them natively.
 
 6. **Grid preference localStorage**: User grid preference is stored in `localStorage` under key `gallery-grid-columns`. The FOUC prevention script reads this synchronously in `<head>` to prevent layout shift.
+
+## Design Philosophy
+
+The gallery intentionally uses **minimal, utilitarian styling**:
+
+1. **No decorative elements**: Buttons use solid colors, no gradients, no shadows
+2. **Theme-aware colors**: All colors reference CSS variables (`--brand-bg`, `--text-color`, etc.) so buttons work in light/dark themes
+3. **Functional over flashy**: Prefer subtle hover states (border color change) over animated effects
+4. **Consistent patterns**: New buttons should follow existing button styles (`.source-btn`, `.lightbox-download`)
+
+When adding new UI elements:
+- Use existing CSS variables for colors
+- Match padding/sizing of similar elements
+- Keep hover effects minimal (color/border changes only)
+- Test in both light and dark themes
