@@ -8,11 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **Lightbox header redesign**: Moved controls from overlaying the image to a fixed header bar at top
-  - Left: Counter + Filename (truncates with ellipsis)
-  - Center: Download button (absolutely positioned)
-  - Right: Meta info (page slug + date) + Close button
-  - Mobile: Download shows icon only, meta hidden
+- **Lightbox header redesign**: Controls reorganized into header bar and bottom action
+  - Header: Counter + Filename (left), Meta info + Close button (right)
+  - Bottom: Download button with solid brand color background (always visible over images)
 - **Card hover lightbox trigger**: Now shows full hover state (white background, dark icon) since lightbox is the default action for previewable files
 
 ### Fixed

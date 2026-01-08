@@ -1672,26 +1672,28 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .lightbox-download {
-      position: absolute;
+      position: fixed;
+      bottom: 1.5rem;
       left: 50%;
       transform: translateX(-50%);
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.4rem 0.6rem;
-      font-size: 0.8125rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
       font-weight: 500;
       color: white;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: var(--brand-color);
+      border: none;
       text-decoration: none;
       cursor: pointer;
       transition: all 0.15s;
+      z-index: 10;
     }
 
     .lightbox-download:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.5);
+      filter: brightness(1.1);
+      box-shadow: 0 0 20px -5px var(--brand-color);
     }
 
     .lightbox-filename {
@@ -1727,14 +1729,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       border-color: rgba(255, 255, 255, 0.5);
     }
 
-    /* Mobile: icon-only download, no meta */
+    /* Mobile: hide meta */
     @media (max-width: 640px) {
-      .lightbox-download span {
-        display: none;
-      }
-      .lightbox-download {
-        padding: 0.4rem;
-      }
       .lightbox-meta {
         display: none;
       }
@@ -1897,10 +1893,6 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         <span class="lightbox-counter"></span>
         <span class="lightbox-filename"></span>
       </div>
-      <a class="lightbox-download" href="" download aria-label="Download file">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        <span>Download</span>
-      </a>
       <div class="lightbox-header-right">
         <span class="lightbox-meta"></span>
         <button class="lightbox-close" aria-label="Close viewer">
@@ -1908,6 +1900,10 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         </button>
       </div>
     </div>
+    <a class="lightbox-download" href="" download aria-label="Download file">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Download
+    </a>
     <div class="lightbox-container">
       <button class="lightbox-nav prev" aria-label="Previous image">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
