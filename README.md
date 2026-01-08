@@ -11,13 +11,13 @@ A Cloudflare Worker that transforms raw Uploadcare group URLs into a beautiful, 
 
 ## The Problem
 
-When users upload files via Uploadcare (e.g., on Webflow forms), the URLs look like this:
+Uploadcare supports **file groups** — a way to bundle multiple uploaded files under a single URL. This is useful when a form field accepts multiple attachments:
 
 ```
 https://your-project.ucarecdn.com/20a62b9a-96be-4782-9016-6a82ce5ef6c7~3/
 ```
 
-These land in your CRM, helpdesk, notifications, or wherever forms submit — and look terrible. No preview, no filenames, just a cryptic UUID.
+But the default group page is barebones: no thumbnails, no real filenames, no branding. When these URLs end up in your CRM, helpdesk, or team notifications, they're nearly unusable.
 
 ## The Solution
 

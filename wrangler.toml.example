@@ -40,3 +40,7 @@ LOGO_URL = "https://yourcompany.com/logo.png"
 # Browse: https://fonts.google.com
 FONT_BODY = "Inter"
 FONT_DISPLAY = "Inter"
+
+# Behavior
+# Card click behavior: "download" (default) or "open" (opens in new tab)
+# MAIN_ACTION = "download"

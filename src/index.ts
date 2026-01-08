@@ -27,11 +27,14 @@ interface Env {
   // Typography (Google Fonts family names)
   FONT_BODY: string              // Body text font
   FONT_DISPLAY: string           // Headings font
+  
+  // Behavior
+  MAIN_ACTION?: string           // "download" (default) or "open" - what clicking card does
 }
 
 // Constants
-const VERSION = '1.0.0';
-const MAX_FILES = 50;
+const VERSION = '1.1.1';
+// No server-side file limit - configure limits in your Uploadcare project settings
 
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
 
@@ -53,9 +56,9 @@ function validateUrl(url: string, env: Env): ValidationResult {
     return { valid: false, error: 'Unauthorized CDN host' };
   }
 
-  // Reasonable file count limit
+  // Basic validation - at least 1 file
   const count = parseInt(countStr, 10);
-  if (count < 1 || count > MAX_FILES) {
+  if (count < 1) {
     return { valid: false, error: 'Invalid file count' };
   }
 
@@ -97,32 +100,128 @@ function isImageExtension(ext: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext);
 }
 
-function getFileTypeIcon(ext: string): string {
-  const icons: Record<string, string> = {
-    // Images
-    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
-    // Videos
-    mp4: '🎬', mov: '🎬', avi: '🎬', webm: '🎬', mkv: '🎬',
-    // Documents
-    pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊',
-    txt: '📃', csv: '📊', ppt: '📽️', pptx: '📽️',
-    // Archives
-    zip: '📦', rar: '📦', '7z': '📦', tar: '📦', gz: '📦',
-    // Default
-    '': '📎'
-  };
-  return icons[ext] || '📎';
+function isVideoExtension(ext: string): boolean {
+  return ['mp4', 'mov', 'avi', 'webm', 'mkv', 'flv', 'wmv', 'm4v', '3gp'].includes(ext);
+}
+
+function isPdfExtension(ext: string): boolean {
+  return ext === 'pdf';
+}
+
+/**
+ * Returns an inline SVG icon for the given file extension.
+ * Uses stroke icons with currentColor for easy styling.
+ */
+function getFileTypeIconSvg(ext: string): string {
+  // Video files - film/clapperboard icon
+  if (isVideoExtension(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+      <line x1="7" y1="2" x2="7" y2="22"></line>
+      <line x1="17" y1="2" x2="17" y2="22"></line>
+      <line x1="2" y1="12" x2="22" y2="12"></line>
+      <line x1="2" y1="7" x2="7" y2="7"></line>
+      <line x1="2" y1="17" x2="7" y2="17"></line>
+      <line x1="17" y1="17" x2="22" y2="17"></line>
+      <line x1="17" y1="7" x2="22" y2="7"></line>
+    </svg>`;
+  }
+
+  // PDF documents - document with lines icon
+  if (isPdfExtension(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>`;
+  }
+
+  // Word documents
+  if (['doc', 'docx', 'rtf', 'odt'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <line x1="10" y1="9" x2="8" y2="9"></line>
+    </svg>`;
+  }
+
+  // Spreadsheets - table/grid icon
+  if (['xls', 'xlsx', 'csv', 'ods', 'numbers'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <rect x="6" y="11" width="12" height="9" rx="1"></rect>
+      <line x1="10" y1="11" x2="10" y2="20"></line>
+      <line x1="14" y1="11" x2="14" y2="20"></line>
+      <line x1="6" y1="15" x2="18" y2="15"></line>
+    </svg>`;
+  }
+
+  // Presentations - slides icon
+  if (['ppt', 'pptx', 'key', 'odp'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <rect x="7" y="11" width="10" height="7" rx="1"></rect>
+      <line x1="12" y1="18" x2="12" y2="20"></line>
+      <line x1="9" y1="20" x2="15" y2="20"></line>
+    </svg>`;
+  }
+
+  // Archives - package icon
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16.5 9.4 7.55 4.24"></path>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      <polyline points="3.29 7 12 12 20.71 7"></polyline>
+      <line x1="12" y1="22" x2="12" y2="12"></line>
+    </svg>`;
+  }
+
+  // Audio files - waveform/audio icon
+  if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'aiff'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l12-2v13"></path>
+      <circle cx="6" cy="18" r="3"></circle>
+      <circle cx="18" cy="16" r="3"></circle>
+    </svg>`;
+  }
+
+  // Text/code files
+  if (['txt', 'md', 'json', 'xml', 'html', 'css', 'js', 'ts', 'py', 'rb', 'java', 'c', 'cpp', 'h', 'sh', 'yaml', 'yml', 'toml', 'ini', 'log'].includes(ext)) {
+    return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+    </svg>`;
+  }
+
+  // Generic file fallback
+  return `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <polyline points="14 2 14 8 20 8"></polyline>
+  </svg>`;
 }
 
 interface FileInfo {
   index: number;
   url: string;
   filename: string;
+  extension: string;  // Lowercase file extension (e.g., 'pdf', 'jpg', 'docx')
+}
+
+function getExtensionFromFilename(filename: string): string {
+  const match = filename.match(/\.([a-zA-Z0-9]+)$/);
+  return match ? match[1].toLowerCase() : '';
 }
 
 async function fetchFileInfos(host: string, groupId: string, count: number): Promise<FileInfo[]> {
   const baseUrl = `https://${host}/${groupId}~${count}`;
-  const fileInfos: FileInfo[] = [];
 
   // Fetch headers for each file to get filenames
   const promises = Array.from({ length: count }, async (_, i) => {
@@ -133,9 +232,10 @@ async function fetchFileInfos(host: string, groupId: string, count: number): Pro
       // Parse filename from: inline; filename="somefile.png"
       const match = contentDisposition.match(/filename="([^"]+)"/);
       const filename = match ? match[1] : `File ${i + 1}`;
-      return { index: i, url: fileUrl, filename };
+      const extension = getExtensionFromFilename(filename);
+      return { index: i, url: fileUrl, filename, extension };
     } catch {
-      return { index: i, url: fileUrl, filename: `File ${i + 1}` };
+      return { index: i, url: fileUrl, filename: `File ${i + 1}`, extension: '' };
     }
   });
 
@@ -156,46 +256,81 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       ? `<img src="${env.LOGO_URL}" alt="${env.COMPANY_NAME}" class="logo-img" style="height: 18px; width: auto;" />`
       : `<span class="logo-text" style="font-weight: 600; font-size: 1rem;">${env.COMPANY_NAME}</span>`;
   
-  // Generate file cards with actual filenames
+  // Generate file cards with actual filenames and smart thumbnails
   const fileCards = fileInfos.map((file, i) => {
     const fileUrl = file.url;
-    // For thumbnails, use Uploadcare's image transformations
-    // Size: 1200x750 covers ~400px display @ 3x retina, quality: smart auto-optimizes
-    const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/1200x750/-/quality/smart/-/format/auto/`;
     const displayName = file.filename;
+    const ext = file.extension;
     // Escape HTML entities in filename for title attribute
     const escapedName = displayName.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
     const downloadUrl = `${fileUrl}/-/inline/no/`;
-    return `
-      <div class="file-card" data-index="${i}">
-        <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="card-main" title="${escapedName}">
-          <div class="thumbnail-container">
-            <img 
+    
+    // Smart thumbnail logic based on file type
+    let thumbnailHtml: string;
+    if (isImageExtension(ext)) {
+      // Images: use Uploadcare's preview transformation
+      const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/1200x750/-/quality/smart/-/format/auto/`;
+      thumbnailHtml = `<img 
               src="${thumbnailUrl}" 
               alt="${escapedName}" 
               class="thumbnail"
               loading="lazy"
-              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>📎</div>'"
-            />
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+            />`;
+    } else if (isVideoExtension(ext)) {
+      // Videos: Uploadcare extracts first frame automatically with preview
+      const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/1200x750/-/format/jpeg/`;
+      thumbnailHtml = `<img 
+              src="${thumbnailUrl}" 
+              alt="${escapedName}" 
+              class="thumbnail"
+              loading="lazy"
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+            />`;
+    } else if (isPdfExtension(ext)) {
+      // PDFs: Uploadcare converts first page to image
+      const thumbnailUrl = `${baseUrl}/nth/${i}/-/preview/1200x750/-/format/jpeg/`;
+      thumbnailHtml = `<img 
+              src="${thumbnailUrl}" 
+              alt="${escapedName}" 
+              class="thumbnail"
+              loading="lazy"
+              onerror="this.parentElement.innerHTML='<div class=\\'fallback-icon\\'>${getFileTypeIconSvg(ext).replace(/'/g, "\\'")}</div>'"
+            />`;
+    } else {
+      // Non-previewable files: show SVG icon immediately (no wasted network request)
+      thumbnailHtml = `<div class="fallback-icon">${getFileTypeIconSvg(ext)}</div>`;
+    }
+    
+    // Determine main action: download (default) or open
+    const mainActionIsOpen = env.MAIN_ACTION === 'open';
+    const cardMainHref = mainActionIsOpen ? fileUrl : downloadUrl;
+    const cardMainTarget = mainActionIsOpen ? ' target="_blank" rel="noopener noreferrer"' : '';
+    
+    return `
+      <li class="file-card" data-index="${i}">
+        <a href="${cardMainHref}"${cardMainTarget} class="card-main" title="${escapedName}">
+          <div class="thumbnail-container">
+            ${thumbnailHtml}
           </div>
           <div class="file-info">
             <span class="file-name" title="${escapedName}">${displayName}</span>
           </div>
         </a>
         <div class="card-actions">
-          <a href="${downloadUrl}" class="card-action download-action" title="Download file">
+          <a href="${downloadUrl}" class="card-action download-action" aria-label="Download ${escapedName}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline class="download-arrow" points="7 10 12 15 17 10"></polyline><line class="download-arrow" x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Download
-            <svg class="action-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span aria-hidden="true">Download</span>
+            <svg class="action-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </a>
-          <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="card-action open-action" title="Open in new tab">
+          <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="card-action open-action" aria-label="Open ${escapedName} in new tab">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline class="arrow-part" points="15 3 21 3 21 9"></polyline><line class="arrow-part" x1="10" y1="14" x2="21" y2="3"></line></svg>
-            Open
-            <svg class="action-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span aria-hidden="true">Open</span>
+            <svg class="action-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </a>
         </div>
-      </div>
+      </li>
     `;
   }).join('');
 
@@ -227,6 +362,58 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+
+    /* Accessibility: Focus styles */
+    :focus-visible {
+      outline: 2px solid var(--brand-color);
+      outline-offset: 2px;
+    }
+
+    :focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    /* Accessibility: Skip link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      padding: 8px 16px;
+      background: var(--brand-color);
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      z-index: 100;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
+    /* Accessibility: Screen reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Accessibility: Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     html {
@@ -695,6 +882,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1.25rem;
+      list-style: none;
     }
 
     @media (max-width: 900px) {
@@ -876,8 +1064,17 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     }
 
     .fallback-icon {
-      font-size: 3rem;
-      opacity: 0.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: var(--text-muted);
+    }
+
+    .fallback-icon svg {
+      width: 48px;
+      height: 48px;
     }
 
     .file-info {
@@ -1126,6 +1323,12 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  
+  <!-- Screen reader announcements -->
+  <div id="sr-status" aria-live="polite" class="sr-only"></div>
+  <div id="download-status" aria-live="assertive" class="sr-only"></div>
+  
   <header>
     <div class="header-inner">
       <div class="logo-group">
@@ -1136,30 +1339,31 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         <div class="divider"></div>
         <span class="page-title">ATTACHMENTS</span>
       </div>
-      <button id="share-btn" class="share-btn" title="Copy link to clipboard">
-        <svg class="share-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-        <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <span class="share-text">Share</span>
+      <button id="share-btn" class="share-btn" aria-label="Copy link to clipboard">
+        <svg class="share-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span class="share-text" aria-hidden="true">Share</span>
       </button>
     </div>
   </header>
 
-  <main>
+  <main id="main-content">
     <div class="content-header">
+      <h1 class="sr-only">File Attachments</h1>
       <div class="meta-row">
         <div class="meta-left">
-          ${pageSlug ? `<span class="meta-label">From</span> <a href="${env.COMPANY_URL}/${pageSlug}" target="_blank" rel="noopener noreferrer nofollow">/<span class="slug-text">${pageSlug}</span></a>` : ''}${timestamp ? `${pageSlug ? ' <span class="meta-label">on</span> ' : ''}<span class="timestamp-wrap" id="timestamp-wrap" data-ts="${timestamp}">
+          ${pageSlug ? `<span class="meta-label">From</span> <a href="${env.COMPANY_URL}/${pageSlug}" target="_blank" rel="noopener noreferrer nofollow">/<span class="slug-text">${pageSlug}</span></a>` : ''}${timestamp ? `${pageSlug ? ' <span class="meta-label">on</span> ' : ''}<span class="timestamp-wrap" id="timestamp-wrap" data-ts="${timestamp}" tabindex="0" role="button" aria-expanded="false" aria-haspopup="true">
             <span class="timestamp-text"><span class="ts-long">${formatTimestamp(timestamp)}</span><span class="ts-short">${formatTimestampShort(timestamp)}</span></span>
-            <div class="timestamp-tooltip" id="timestamp-tooltip">
+            <div class="timestamp-tooltip" id="timestamp-tooltip" role="tooltip">
               <div class="tooltip-local" id="tooltip-local"></div>
               <div class="tooltip-tz" id="tooltip-tz"></div>
               <div class="tooltip-actions">
-                <button class="tooltip-copy" id="tooltip-copy" title="Copy UTC time">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <button class="tooltip-copy" id="tooltip-copy" aria-label="Copy UTC time to clipboard">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                 </button>
-                <a href="#" class="tooltip-convert" id="tooltip-convert" target="_blank" rel="noopener noreferrer">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                  Convert
+                <a href="#" class="tooltip-convert" id="tooltip-convert" target="_blank" rel="noopener noreferrer" aria-label="Convert time to other timezones">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  <span aria-hidden="true">Convert</span>
                 </a>
               </div>
             </div>
@@ -1175,9 +1379,9 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       </div>
     </div>
 
-    <div class="file-grid">
+    <ul class="file-grid" role="list">
       ${fileCards}
-    </div>
+    </ul>
 
     ${count > 1 ? `<div class="actions">
       <div class="actions-left">
@@ -1195,19 +1399,21 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         </a>
       </div>
       <div class="actions-right">
-        <button id="downloaded-pill" class="pill pill-counter" style="display:none;" onclick="resetDownloaded()" title="Files downloaded — click to clear">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <span id="downloaded-count">0</span>
+        <button id="downloaded-pill" class="pill pill-counter" style="display:none;" onclick="resetDownloaded()" aria-label="Clear download history">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span id="downloaded-count" aria-hidden="true">0</span>
+          <span class="sr-only">files downloaded</span>
         </button>
-        <button id="opened-pill" class="pill pill-counter" style="display:none;" onclick="resetOpenedOnly()" title="Files opened — click to clear">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          <span id="opened-count">0</span>
+        <button id="opened-pill" class="pill pill-counter" style="display:none;" onclick="resetOpenedOnly()" aria-label="Clear opened files history">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          <span id="opened-count" aria-hidden="true">0</span>
+          <span class="sr-only">files opened</span>
         </button>
-        <button id="reset-btn" onclick="resetAll()" class="reset-btn" title="Clear all download and open history" disabled>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-          Reset All
+        <button id="reset-btn" onclick="resetAll()" class="reset-btn" aria-label="Clear all download and open history" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+          <span aria-hidden="true">Reset All</span>
         </button>
-        <span class="pill" title="Total files in this attachment group">${count} files</span>
+        <span class="pill" aria-label="${count} files total">${count} files</span>
       </div>
     </div>` : ''}
   </main>
@@ -1221,6 +1427,16 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
+    // Screen reader announcements helper
+    function announce(message, assertive = false) {
+      const el = document.getElementById(assertive ? 'download-status' : 'sr-status');
+      if (el) {
+        el.textContent = message;
+        // Clear after announcement to allow repeated announcements
+        setTimeout(() => { el.textContent = ''; }, 1000);
+      }
+    }
+
     const fileUrls = [
       ${Array.from({ length: count }, (_, i) => `'${baseUrl}/nth/${i}/'`).join(',\n      ')}
     ];
@@ -1293,23 +1509,26 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     function resetOpenedOnly() {
       sessionStorage.removeItem(openedKey);
       updateStates();
+      announce('Opened files history cleared');
     }
 
     function resetDownloaded() {
       sessionStorage.removeItem(downloadedKey);
       updateStates();
+      announce('Download history cleared');
     }
 
     function resetAll() {
       sessionStorage.removeItem(openedKey);
       sessionStorage.removeItem(downloadedKey);
       updateStates();
+      announce('All history cleared');
     }
 
     // Track clicks on file cards
     document.querySelectorAll('.file-card').forEach((card) => {
       const index = parseInt(card.dataset.index, 10);
-      card.querySelector('.card-main').addEventListener('click', () => markFileOpened(index));
+      card.querySelector('.card-main').addEventListener('click', () => ${env.MAIN_ACTION === 'open' ? 'markFileOpened' : 'markFileDownloaded'}(index));
       card.querySelector('.open-action').addEventListener('click', () => markFileOpened(index));
       card.querySelector('.download-action').addEventListener('click', () => markFileDownloaded(index));
     });
@@ -1357,6 +1576,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
           await navigator.clipboard.writeText(window.location.href);
           shareBtn.classList.add('copied');
           shareBtn.querySelector('.share-text').textContent = 'Copied!';
+          announce('Link copied to clipboard');
           setTimeout(() => {
             shareBtn.classList.remove('copied');
             shareBtn.querySelector('.share-text').textContent = 'Share';
@@ -1433,6 +1653,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       const convertUrl = 'https://www.timeanddate.com/worldclock/fixedtime.html?iso=' + isoDate + '&p1=1440';
       document.getElementById('tooltip-convert').href = convertUrl;
 
+      // Toggle tooltip and update aria-expanded
+      function toggleTooltip(show) {
+        const isOpen = show !== undefined ? show : !tooltip.classList.contains('active');
+        tooltip.classList.toggle('active', isOpen);
+        wrap.setAttribute('aria-expanded', isOpen.toString());
+      }
+
       // Copy UTC functionality
       const copyBtn = document.getElementById('tooltip-copy');
       copyBtn.addEventListener('click', async (e) => {
@@ -1440,10 +1667,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         try {
           await navigator.clipboard.writeText(utcStr);
           copyBtn.classList.add('copied');
-          copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+          copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+          announce('UTC time copied to clipboard');
           setTimeout(() => {
             copyBtn.classList.remove('copied');
-            copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+            copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
           }, 1500);
         } catch (err) {
           console.error('Copy failed:', err);
@@ -1451,18 +1679,35 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       });
 
       // Mobile/touch: tap to toggle (desktop hover is handled by CSS)
-      // This also serves as a fallback for any device
       wrap.addEventListener('click', (e) => {
         // Don't interfere with copy/convert button clicks
         if (e.target.closest('.tooltip-copy') || e.target.closest('.tooltip-convert')) return;
         e.stopPropagation();
-        tooltip.classList.toggle('active');
+        toggleTooltip();
       });
 
-      // Close when tapping/clicking elsewhere
+      // Keyboard accessibility: Enter/Space to toggle, Escape to close
+      wrap.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleTooltip();
+        } else if (e.key === 'Escape') {
+          toggleTooltip(false);
+        }
+      });
+
+      // Close when clicking elsewhere
       document.addEventListener('click', (e) => {
         if (!wrap.contains(e.target)) {
-          tooltip.classList.remove('active');
+          toggleTooltip(false);
+        }
+      });
+
+      // Close on Escape key anywhere
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && tooltip.classList.contains('active')) {
+          toggleTooltip(false);
+          wrap.focus();
         }
       });
     })();
@@ -1492,10 +1737,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     async function downloadAllFiles() {
       const btn = document.querySelector('.btn-primary');
       const originalText = btn.innerHTML;
-      const spinnerSvg = '<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+      const spinnerSvg = '<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
       
       btn.disabled = true;
       btn.innerHTML = spinnerSvg + ' Preparing...';
+      announce('Preparing ZIP download', true);
 
       try {
         const zip = new JSZip();
@@ -1503,6 +1749,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         // Fetch all files
         for (let i = 0; i < fileUrls.length; i++) {
           btn.innerHTML = spinnerSvg + ' Fetching ' + (i + 1) + '/' + fileUrls.length;
+          announce('Downloading file ' + (i + 1) + ' of ' + fileUrls.length, true);
           
           const response = await fetch(fileUrls[i]);
           const blob = await response.blob();
@@ -1515,6 +1762,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         
         // Generate zip
         btn.innerHTML = spinnerSvg + ' Zipping...';
+        announce('Creating ZIP archive', true);
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         
         // Download the zip
@@ -1528,9 +1776,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         URL.revokeObjectURL(blobUrl);
         
         btn.innerHTML = originalText;
+        announce('Download complete', true);
       } catch (err) {
         console.error('Download failed:', err);
         btn.innerHTML = '❌ Download failed';
+        announce('Download failed', true);
         setTimeout(() => { btn.innerHTML = originalText; }, 2000);
       }
       

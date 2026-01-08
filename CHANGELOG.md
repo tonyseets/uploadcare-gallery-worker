@@ -4,11 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.1] - 2026-01-07
 
 ### Changed
 
-- Improved error page styling with card-based layout and SVG warning icon (replaces emoji)
+- Card click now downloads file by default (matches hover visual cue)
+- New `MAIN_ACTION` env var to configure card click behavior ("download" or "open")
+
+## [1.1.0] - 2026-01-07
+
+### Added
+
+- Smart file type handling: images, videos, and PDFs get preview thumbnails; other file types show clean SVG icons without wasted network requests
+- File type SVG icons for: videos, PDFs, Word docs, spreadsheets, presentations, archives, audio files, text/code files
+- Comprehensive accessibility improvements:
+  - Skip-to-content link for keyboard/screen reader users
+  - Visible focus indicators (`:focus-visible`) on all interactive elements
+  - `aria-label` attributes on icon-only buttons (share, download, open, reset)
+  - `aria-live` regions for dynamic announcements (clipboard copy, download progress, history cleared)
+  - `prefers-reduced-motion` media query to disable animations
+  - Proper heading hierarchy with semantic `<h1>` (visually hidden)
+  - File grid converted from `<div>` to semantic `<ul>/<li>` list
+  - Keyboard-accessible timestamp tooltip (Enter/Space to toggle, Escape to close, `aria-expanded`)
+  - Screen reader announcements for ZIP download progress
+
+### Changed
+
+- Version bump to 1.1.0
+- Removed server-side file count limit (MAX_FILES) — configure limits in Uploadcare project settings instead
+- Fallback icons now use SVG instead of emoji for consistent styling
+
+### Technical
+
+- Added `extension` field to `FileInfo` interface parsed from filename
+- New helper functions: `isVideoExtension()`, `isPdfExtension()`, `getFileTypeIconSvg()`
+- New helper function: `getExtensionFromFilename()`
 
 ## [1.0.0] - 2026-01-07
 
