@@ -1569,6 +1569,7 @@ function generateErrorHtml(env: Env, error: string): string {
       --brand-color: ${env.BRAND_COLOR};
       --brand-bg: #ffffff;
       --brand-panel: #f9fafb;
+      --brand-surface: #f3f4f6;
       --brand-border: #e5e7eb;
       --text-primary: #111827;
       --text-secondary: #6b7280;
@@ -1646,21 +1647,44 @@ function generateErrorHtml(env: Env, error: string): string {
       color: var(--text-secondary);
     }
 
-    .error-container {
+    .error-wrapper {
       flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      text-align: center;
     }
 
-    .error-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .error-card {
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-border);
+      padding: 3rem 2.5rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .error-icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1px solid #fcd34d;
+      margin-bottom: 1.5rem;
+    }
+
+    .error-icon-wrap svg {
+      width: 32px;
+      height: 32px;
+      color: #b45309;
+    }
 
     .error-title {
       font-family: '${env.FONT_DISPLAY}', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 0.5rem;
@@ -1668,15 +1692,28 @@ function generateErrorHtml(env: Env, error: string): string {
 
     .error-message {
       color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-      max-width: 400px;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      margin-bottom: 1.75rem;
+    }
+
+    .error-code {
+      display: inline-block;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-border);
+      padding: 0.25rem 0.5rem;
+      font-family: '${env.FONT_DISPLAY}', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
+      padding: 0.75rem 1.5rem;
       background: var(--brand-color);
       color: white;
       border-radius: 0;
@@ -1684,15 +1721,24 @@ function generateErrorHtml(env: Env, error: string): string {
       font-weight: 500;
       text-decoration: none;
       transition: all 0.2s;
+      width: 100%;
     }
 
     .btn:hover {
-      filter: brightness(0.85);
+      filter: brightness(0.9);
       box-shadow: 0 0 20px -5px ${env.BRAND_COLOR}80;
     }
 
+    .btn svg {
+      transition: transform 0.2s;
+    }
+
+    .btn:hover svg {
+      transform: translateX(2px);
+    }
+
     footer {
-      border-top: 1px solid rgba(42, 43, 40, 0.5);
+      border-top: 1px solid var(--brand-border);
     }
 
     .footer-inner {
@@ -1730,6 +1776,7 @@ function generateErrorHtml(env: Env, error: string): string {
 
     @media (max-width: 640px) {
       .divider, .page-title { display: none; }
+      .error-card { padding: 2rem 1.5rem; }
     }
   </style>
 </head>
@@ -1745,11 +1792,22 @@ function generateErrorHtml(env: Env, error: string): string {
     </div>
   </header>
 
-  <div class="error-container">
-    <div class="error-icon">⚠️</div>
-    <h1 class="error-title">Unable to Load Attachments</h1>
-    <p class="error-message">${error}</p>
-    <a href="${env.COMPANY_URL}" rel="noopener noreferrer nofollow" class="btn">Go to ${env.COMPANY_NAME}</a>
+  <div class="error-wrapper">
+    <div class="error-card">
+      <div class="error-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h1 class="error-title">Unable to Load Attachments</h1>
+      <p class="error-message">${error}</p>
+      <a href="${env.COMPANY_URL}" rel="noopener noreferrer nofollow" class="btn">
+        Go to ${env.COMPANY_NAME}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+      </a>
+    </div>
   </div>
 
   <footer>
