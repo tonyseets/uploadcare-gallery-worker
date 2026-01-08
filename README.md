@@ -75,7 +75,7 @@ All branding is controlled via environment variables in `wrangler.toml`.
 | Variable | Description |
 |----------|-------------|
 | `ALLOWED_CDN_HOSTS` | Uploadcare CDN hostname(s), comma-separated |
-| `COMPANY_NAME` | Displayed in header and page title |
+| `COMPANY_NAME` | Displayed in header, page title, and meta description |
 | `COMPANY_URL` | Logo links here |
 | `WORKER_URL` | Full URL of your deployed worker |
 
