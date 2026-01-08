@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Theme color env vars for full color customization:
   - `BG_COLOR`, `PANEL_COLOR`, `SURFACE_COLOR`, `BORDER_COLOR`
   - `TEXT_COLOR`, `TEXT_SECONDARY_COLOR`, `TEXT_MUTED_COLOR`
-  - `HEADER_BG` (supports rgba for transparency)
+  - `HEADER_BG`
+- All color vars support any CSS color format (hex, rgba, hsl, etc.)
 - Defaults to light theme; set these for dark or brand-specific themes
 
 ## [1.1.5] - 2026-01-07

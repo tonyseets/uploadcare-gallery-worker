@@ -104,7 +104,7 @@ All branding is controlled via environment variables in `wrangler.toml`.
 
 ### Theme Colors (Optional)
 
-All colors use hex format. Set these to customize the color scheme (e.g., for dark themes):
+Set these to customize the color scheme (e.g., for dark themes). All color vars support any CSS color format (hex, rgba, hsl, etc.):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
