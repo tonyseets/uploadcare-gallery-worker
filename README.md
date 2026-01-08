@@ -82,6 +82,7 @@ All branding is controlled via environment variables in `wrangler.toml`:
 | `LOGO_URL` | ⬜ | URL to logo image (fallback) |
 | `FONT_BODY` | ✅ | Google Fonts family for body text |
 | `FONT_DISPLAY` | ✅ | Google Fonts family for headings |
+| `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
 
 ### Example Configuration
 
@@ -153,7 +154,7 @@ Now when forms submit to your CRM/backend, they contain gallery URLs instead of 
 |---------|----------------|
 | **CDN Allowlist** | Only URLs from configured `ALLOWED_CDN_HOSTS` are accepted |
 | **URL Validation** | Strict regex matching for Uploadcare group URL format |
-| **File Count Limit** | Max 50 files per group |
+| **File Count Limit** | Configure in Uploadcare project settings |
 | **No Indexing** | `noindex, nofollow` meta tags |
 | **CORS** | Only enabled for `/uploader.js` endpoint |
 

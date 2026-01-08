@@ -36,6 +36,7 @@ interface Env {
   FAVICON_URL: string        // Favicon URL
   FONT_BODY: string          // Google Fonts body font
   FONT_DISPLAY: string       // Google Fonts display font
+  MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)
@@ -56,7 +57,7 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 
 1. **CDN Allowlist**: Only URLs from configured `ALLOWED_CDN_HOSTS` are accepted
 2. **No User Input in HTML**: All dynamic content is escaped
-3. **File Count Limits**: 1-50 files per group
+3. **File Count Limits**: Configure in your Uploadcare project settings (no server-side limit)
 4. **No Secrets**: All config is via non-secret env vars
 
 ## Common Tasks
