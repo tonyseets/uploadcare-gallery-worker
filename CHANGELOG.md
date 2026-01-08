@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Health check endpoint (`/health`) for monitoring
 - Gallery viewer with thumbnail previews for Uploadcare file groups
 - Real filename extraction from Uploadcare Content-Disposition headers
 - Download individual files or ZIP all files at once
@@ -23,3 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - File count validation (1-50 files per group)
 - Light mode as default theme
 - Retina display support for thumbnails (2x resolution)
+
+### Technical
+
+- `VERSION` and `MAX_FILES` constants for maintainability
+- Discriminated union type for `ValidationResult` (type-safe validation)
+- Health check endpoint (`/health`) for monitoring

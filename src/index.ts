@@ -29,15 +29,15 @@ interface Env {
   FONT_DISPLAY: string           // Headings font
 }
 
+// Constants
+const VERSION = '1.0.0';
+const MAX_FILES = 50;
+
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
 
-interface ValidationResult {
-  valid: boolean;
-  host?: string;
-  groupId?: string;
-  count?: number;
-  error?: string;
-}
+type ValidationResult =
+  | { valid: true; host: string; groupId: string; count: number }
+  | { valid: false; error: string };
 
 function validateUrl(url: string, env: Env): ValidationResult {
   if (!url) return { valid: false, error: 'No URL provided' };
@@ -55,7 +55,7 @@ function validateUrl(url: string, env: Env): ValidationResult {
 
   // Reasonable file count limit
   const count = parseInt(countStr, 10);
-  if (count < 1 || count > 50) {
+  if (count < 1 || count > MAX_FILES) {
     return { valid: false, error: 'Invalid file count' };
   }
 
@@ -1214,7 +1214,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
   <footer>
     <div class="footer-inner">
-      <span class="footer-version">Attachment Viewer 1.0</span>
+      <span class="footer-version">Attachment Viewer v${VERSION}</span>
       <a href="${env.COMPANY_URL}" target="_blank" rel="noopener noreferrer nofollow" class="footer-link">${companyDomain}</a>
     </div>
   </footer>
@@ -1754,7 +1754,7 @@ function generateErrorHtml(env: Env, error: string): string {
 
   <footer>
     <div class="footer-inner">
-      <span class="footer-version">Attachment Viewer 1.0</span>
+      <span class="footer-version">Attachment Viewer v${VERSION}</span>
       <a href="${env.COMPANY_URL}" target="_blank" rel="noopener noreferrer nofollow" class="footer-link">${companyDomain}</a>
     </div>
   </footer>
@@ -1803,6 +1803,17 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     
+    // Health check endpoint for monitoring
+    if (url.pathname === '/health') {
+      return new Response(JSON.stringify({ status: 'ok', version: VERSION }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    }
+    
     // Serve the uploader script (CDN cached)
     if (url.pathname === '/uploader.js') {
       // Generate script with configured worker URL
@@ -1832,25 +1843,23 @@ export default {
     const validation = validateUrl(uploadcareUrl || '', env);
 
     if (!validation.valid) {
-      return new Response(generateErrorHtml(env, validation.error || 'Invalid request'), {
+      return new Response(generateErrorHtml(env, validation.error), {
         status: 400,
         headers: { 'Content-Type': 'text/html;charset=UTF-8' }
       });
     }
 
+    const { host, groupId, count } = validation;
+
     // Fetch file info (filenames) from Uploadcare
-    const fileInfos = await fetchFileInfos(
-      validation.host!,
-      validation.groupId!,
-      validation.count!
-    );
+    const fileInfos = await fetchFileInfos(host, groupId, count);
 
     // Generate and return the gallery HTML
     const html = generateHtml(
       env,
-      validation.host!,
-      validation.groupId!,
-      validation.count!,
+      host,
+      groupId,
+      count,
       uploadcareUrl!,
       pageSlug,
       timestamp,
