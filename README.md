@@ -160,7 +160,7 @@ The worker URL is injected automatically. Update the `?v=` parameter to bust cac
 
 ### Option 2: Inline the Script
 
-Copy [`uc-gallery-connect-snippet.js`](./uc-gallery-connect-snippet.js) into your site's custom code and set your worker URL:
+Copy [`uc-gallery-connect.example.js`](./uc-gallery-connect.example.js) into your site's custom code and set your worker URL:
 
 ```javascript
 const WORKER_URL = 'https://your-worker.workers.dev';
@@ -168,7 +168,7 @@ const WORKER_URL = 'https://your-worker.workers.dev';
 
 ### Option 3: Self-Host the Script
 
-Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uc-gallery-connect-snippet.js`, replace `__WORKER_URL__` with your worker URL, and serve it from your CDN.
+Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uc-gallery-connect.example.js`, replace `__WORKER_URL__` with your worker URL, and serve it from your CDN.
 
 ### What the Script Does
 

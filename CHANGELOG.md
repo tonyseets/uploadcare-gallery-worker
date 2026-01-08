@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Renamed `/uploader.js` → `/uc-gallery-connect.js` (better describes what it does)
-- Renamed `uploader-snippet.js` → `uc-gallery-connect-snippet.js`
+- Renamed `uploader-snippet.js` → `uc-gallery-connect.example.js`
 - Renamed internal constant `WEBFLOW_SNIPPET` → `UC_GALLERY_CONNECT_SCRIPT`
 
 ## [1.1.6] - 2026-01-07

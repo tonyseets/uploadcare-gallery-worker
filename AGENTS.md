@@ -14,7 +14,7 @@ Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Tw
 | File | Purpose |
 |------|---------|
 | `src/index.ts` | Main worker code (all logic in one file) |
-| `uc-gallery-connect-snippet.js` | Reference copy of the connect script (canonical version is in index.ts) |
+| `uc-gallery-connect.example.js` | Reference copy of the connect script (canonical version is in index.ts) |
 | `wrangler.toml.example` | Template for configuration (copy to wrangler.toml) |
 | `wrangler.toml` | Local config (gitignored - contains your specific branding) |
 | `CHANGELOG.md` | Version history (update when making notable changes) |
@@ -77,7 +77,7 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 ### Update the Uploader Script
 
 1. Edit the `UC_GALLERY_CONNECT_SCRIPT` constant in `src/index.ts`
-2. Optionally update `uc-gallery-connect-snippet.js` for reference
+2. Optionally update `uc-gallery-connect.example.js` for reference
 3. Deploy: `npm run deploy`
 
 ### Add a New CDN Host
