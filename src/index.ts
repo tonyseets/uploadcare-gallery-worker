@@ -2092,9 +2092,9 @@ function generateErrorHtml(env: Env, error: string): string {
 </html>`;
 }
 
-// Uploader script served from worker (CDN cached)
+// UC Gallery Connect script served from worker (CDN cached)
 // The WORKER_URL placeholder is replaced at runtime with env.WORKER_URL
-const WEBFLOW_SNIPPET = `/**
+const UC_GALLERY_CONNECT_SCRIPT = `/**
  * Uploadcare Gallery URL Transformer
  * Automatically wraps Uploadcare group URLs with the gallery worker for a better viewing experience.
  */
@@ -2144,10 +2144,10 @@ export default {
       });
     }
     
-    // Serve the uploader script (CDN cached)
-    if (url.pathname === '/uploader.js') {
+    // Serve the UC Gallery Connect script (CDN cached)
+    if (url.pathname === '/uc-gallery-connect.js') {
       // Generate script with configured worker URL
-      const script = WEBFLOW_SNIPPET.replace(
+      const script = UC_GALLERY_CONNECT_SCRIPT.replace(
         "'__WORKER_URL__'",
         `'${env.WORKER_URL}'`
       );

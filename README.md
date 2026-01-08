@@ -139,11 +139,11 @@ FONT_DISPLAY = "Inter"
 | Path | Description | Caching |
 |------|-------------|---------|
 | `/?url=...` | Gallery viewer | 1 hour |
-| `/uploader.js?v=X.X.X` | Client-side URL transformer | Immutable (use version for cache busting) |
+| `/uc-gallery-connect.js?v=X.X.X` | Client-side URL transformer | Immutable (use version for cache busting) |
 
 ## Client-Side Integration
 
-The `/uploader.js` script transforms Uploadcare group URLs into gallery URLs before form submission. This is useful when you want the transformation to happen automatically on the client side.
+The `/uc-gallery-connect.js` script transforms Uploadcare group URLs into gallery URLs before form submission. This is useful when you want the transformation to happen automatically on the client side.
 
 > **Note:** The included script is built for Webflow + Uploadcare's file uploader widget, but can be adapted for other platforms.
 
@@ -152,14 +152,15 @@ The `/uploader.js` script transforms Uploadcare group URLs into gallery URLs bef
 One script tag, auto-configured. Add to your site's footer code:
 
 ```html
-<script src="https://your-worker.workers.dev/uploader.js?v=1.1.2"></script>
+<!-- UC Gallery Connect - transforms Uploadcare URLs to gallery URLs -->
+<script src="https://your-worker.workers.dev/uc-gallery-connect.js?v=1.2.0"></script>
 ```
 
 The worker URL is injected automatically. Update the `?v=` parameter to bust cache when upgrading.
 
 ### Option 2: Inline the Script
 
-Copy [`uploader-snippet.js`](./uploader-snippet.js) into your site's custom code and set your worker URL:
+Copy [`uc-gallery-connect-snippet.js`](./uc-gallery-connect-snippet.js) into your site's custom code and set your worker URL:
 
 ```javascript
 const WORKER_URL = 'https://your-worker.workers.dev';
@@ -167,7 +168,7 @@ const WORKER_URL = 'https://your-worker.workers.dev';
 
 ### Option 3: Self-Host the Script
 
-Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uploader-snippet.js`, replace `__WORKER_URL__` with your worker URL, and serve it from your CDN.
+Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uc-gallery-connect-snippet.js`, replace `__WORKER_URL__` with your worker URL, and serve it from your CDN.
 
 ### What the Script Does
 
@@ -186,7 +187,7 @@ Now when forms submit to your CRM/backend, they contain gallery URLs instead of 
 | **URL Validation** | Strict regex matching for Uploadcare group URL format |
 | **File Count Limit** | Configure in Uploadcare project settings |
 | **No Indexing** | `noindex, nofollow` meta tags |
-| **CORS** | Only enabled for `/uploader.js` endpoint |
+| **CORS** | Only enabled for `/uc-gallery-connect.js` endpoint |
 
 ## Development
 
@@ -208,8 +209,8 @@ npm run tail
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Your Form     │────▶│  uploader.js     │────▶│   Your CRM/     │
-│   + Uploadcare  │     │  (transforms URL)│     │   Backend       │
+│   Your Form     │────▶│ uc-gallery-      │────▶│   Your CRM/     │
+│   + Uploadcare  │     │ connect.js       │     │   Backend       │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                                           │
                                                           ▼
@@ -219,7 +220,7 @@ npm run tail
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-> **Without uploader.js:** You can skip the client-side script entirely and transform URLs server-side, or even manually prepend the worker URL when needed.
+> **Without uc-gallery-connect.js:** You can skip the client-side script entirely and transform URLs server-side, or even manually prepend the worker URL when needed.
 
 ## Alternative Hosting
 

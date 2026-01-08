@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-01-07
+
+### Changed
+
+- **BREAKING**: Renamed `/uploader.js` → `/uc-gallery-connect.js` (better describes what it does)
+- Renamed `uploader-snippet.js` → `uc-gallery-connect-snippet.js`
+- Renamed internal constant `WEBFLOW_SNIPPET` → `UC_GALLERY_CONNECT_SCRIPT`
+
 ## [1.1.6] - 2026-01-07
 
 ### Added
@@ -114,7 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Source page and timestamp metadata support
 - Full white-labeling via environment variables (logo, colors, fonts, company name)
 - Responsive design for mobile and desktop
-- Webflow integration script (`/uploader.js`) for automatic URL transformation
+- Webflow integration script (`/uc-gallery-connect.js`) for automatic URL transformation
 - CDN allowlist security to restrict accepted Uploadcare hosts
 - File count validation (1-50 files per group)
 - Light mode as default theme

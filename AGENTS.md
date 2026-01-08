@@ -5,7 +5,7 @@
 Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Two main functions:
 
 1. **Gallery Viewer** (`/?url=...`) — Renders HTML gallery for file groups
-2. **Uploader Script** (`/uploader.js?v=X.X.X`) — Client-side script for Webflow forms
+2. **UC Gallery Connect** (`/uc-gallery-connect.js?v=X.X.X`) — Client-side script for Webflow forms
 
 **Fully white-labelable** via environment variables in `wrangler.toml`.
 
@@ -14,7 +14,7 @@ Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Tw
 | File | Purpose |
 |------|---------|
 | `src/index.ts` | Main worker code (all logic in one file) |
-| `uploader-snippet.js` | Reference copy of the uploader script (canonical version is in index.ts) |
+| `uc-gallery-connect-snippet.js` | Reference copy of the connect script (canonical version is in index.ts) |
 | `wrangler.toml.example` | Template for configuration (copy to wrangler.toml) |
 | `wrangler.toml` | Local config (gitignored - contains your specific branding) |
 | `CHANGELOG.md` | Version history (update when making notable changes) |
@@ -76,8 +76,8 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 
 ### Update the Uploader Script
 
-1. Edit the `UPLOADER_SNIPPET` constant in `src/index.ts`
-2. Optionally update `uploader-snippet.js` for reference
+1. Edit the `UC_GALLERY_CONNECT_SCRIPT` constant in `src/index.ts`
+2. Optionally update `uc-gallery-connect-snippet.js` for reference
 3. Deploy: `npm run deploy`
 
 ### Add a New CDN Host
@@ -117,8 +117,8 @@ export default {
       return new Response('...', { headers: { 'Content-Type': '...' } });
     }
     
-    // Existing uploader.js route
-    if (url.pathname === '/uploader.js') { ... }
+    // Existing uc-gallery-connect.js route
+    if (url.pathname === '/uc-gallery-connect.js') { ... }
     
     // Gallery handler (default)
     const uploadcareUrl = url.searchParams.get('url');
@@ -138,7 +138,7 @@ npx tsc --noEmit
 
 # Test locally (replace with your CDN host)
 curl "http://localhost:8787/?url=https://your-project.ucarecdn.com/UUID~3/"
-curl "http://localhost:8787/uploader.js"
+curl "http://localhost:8787/uc-gallery-connect.js"
 ```
 
 ## Deployment
@@ -147,8 +147,8 @@ curl "http://localhost:8787/uploader.js"
 npm run deploy
 ```
 
-Note: `/uploader.js` uses immutable caching with version-based cache busting.
-To push updates, bump the version in the embed URL: `/uploader.js?v=X.X.X`
+Note: `/uc-gallery-connect.js` uses immutable caching with version-based cache busting.
+To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.X.X`
 
 ## Dependencies
 
@@ -164,4 +164,4 @@ To push updates, bump the version in the embed URL: `/uploader.js?v=X.X.X`
 
 3. **Session storage**: Opened/downloaded tracking uses `sessionStorage`, so it resets when the tab closes. This is intentional.
 
-4. **CORS on uploader.js**: Has `Access-Control-Allow-Origin: *` because it's loaded cross-origin from various sites.
+4. **CORS on uc-gallery-connect.js**: Has `Access-Control-Allow-Origin: *` because it's loaded cross-origin from various sites.
