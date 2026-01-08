@@ -123,45 +123,27 @@ The `/uploader.js` script transforms Uploadcare group URLs into gallery URLs bef
 
 > **Note:** The included script is built for Webflow + Uploadcare's file uploader widget, but can be adapted for other platforms.
 
-### Option 1: Load from Worker (Recommended for Webflow)
+### Option 1: Load from Worker (Recommended)
 
-Add this to your site's footer code:
+One script tag, auto-configured. Add to your site's footer code:
 
 ```html
 <script src="https://your-worker.workers.dev/uploader.js?v=1.1.2"></script>
 ```
 
-**Important:** Update the `?v=` version parameter when upgrading to get the latest script. The script is cached aggressively (immutable), so changing the version busts the cache instantly.
-
-**Pros:**
-- Simple one-line setup
-- `WORKER_URL` is injected automatically (no hardcoding)
-- Instant updates via version bump
-- CORS headers handled for you
-- No need to host the script yourself
-- Served from Cloudflare's edge (fast globally)
-
-**Cons:**
-- Depends on your worker being deployed and reachable
-- Script updates require changing the version parameter in your site
+The worker URL is injected automatically. Update the `?v=` parameter to bust cache when upgrading.
 
 ### Option 2: Inline the Script
 
-Copy the contents of [`uploader-snippet.js`](./uploader-snippet.js) directly into your site's custom code. Replace `__WORKER_URL__` with your actual worker URL:
+Copy [`uploader-snippet.js`](./uploader-snippet.js) into your site's custom code and set your worker URL:
 
 ```javascript
 const WORKER_URL = 'https://your-worker.workers.dev';
 ```
 
-**Pros:** Full control, can customize behavior, no external dependency.  
-**Cons:** You manage updates manually.
+### Option 3: Self-Host the Script
 
-### Option 3: Self-Host or Fork & Customize
-
-If you want full control, you can:
-
-- **Self-host:** Copy `uploader-snippet.js` to your own server/CDN and serve it from there. Replace `__WORKER_URL__` with your actual worker URL before hosting.
-- **Fork & customize:** For custom behavior (different tracking, additional metadata, different event handling), fork this repo and modify `uploader-snippet.js` or the `UPLOADER_SNIPPET` constant in `src/index.ts`.
+Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uploader-snippet.js`, replace `__WORKER_URL__` with your worker URL, and serve it from your CDN.
 
 ### What the Script Does
 
