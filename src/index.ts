@@ -1152,22 +1152,33 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       background: var(--brand-bg);
     }
 
-    /* Card hover: both buttons ready (equal prominence) */
-    .file-card:hover .card-action {
+    /* Card hover: highlight both action buttons (only when download/open is main action, not lightbox) */
+    body[data-main-action="download"] .file-card:hover .card-action,
+    body[data-main-action="open"] .file-card:hover .card-action {
       background: var(--brand-surface);
       color: var(--text-primary);
     }
 
-    /* Individual button hover: that one highlighted, sibling fades */
-    .file-card:hover .download-action:hover ~ .open-action,
-    .file-card:hover:has(.download-action:hover) .open-action {
+    /* Direct button hover always highlights (regardless of main action) */
+    .file-card .card-action:hover {
+      background: var(--brand-surface);
+      color: var(--text-primary);
+    }
+
+    /* Individual button hover: that one highlighted, sibling fades (only for download/open main actions) */
+    body[data-main-action="download"] .file-card:hover .download-action:hover ~ .open-action,
+    body[data-main-action="download"] .file-card:hover:has(.download-action:hover) .open-action,
+    body[data-main-action="open"] .file-card:hover .download-action:hover ~ .open-action,
+    body[data-main-action="open"] .file-card:hover:has(.download-action:hover) .open-action {
       opacity: 0.5;
       background: var(--brand-bg);
       color: var(--text-secondary);
     }
 
-    .file-card:hover .open-action:hover ~ .download-action,
-    .file-card:hover:has(.open-action:hover) .download-action {
+    body[data-main-action="download"] .file-card:hover .open-action:hover ~ .download-action,
+    body[data-main-action="download"] .file-card:hover:has(.open-action:hover) .download-action,
+    body[data-main-action="open"] .file-card:hover .open-action:hover ~ .download-action,
+    body[data-main-action="open"] .file-card:hover:has(.open-action:hover) .download-action {
       opacity: 0.5;
       background: var(--brand-bg);
       color: var(--text-secondary);
@@ -1177,7 +1188,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       transition: transform 0.2s;
     }
 
-    .file-card:hover .open-action:hover .arrow-part {
+    .file-card .open-action:hover .arrow-part {
       transform: translate(1px, -1px);
     }
 
@@ -1185,13 +1196,19 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       transition: transform 0.2s;
     }
 
-    /* Animate download arrow on card hover (since download is highlighted by default) */
-    .file-card:hover .download-action .download-arrow {
+    /* Animate download arrow on card hover when download is main action */
+    body[data-main-action="download"] .file-card:hover .download-action .download-arrow {
+      transform: translateY(1px);
+    }
+
+    /* Also animate on direct download button hover (any main action) */
+    .file-card .download-action:hover .download-arrow {
       transform: translateY(1px);
     }
 
     /* But not when open action is hovered (download fades in that case) */
-    .file-card:hover:has(.open-action:hover) .download-action .download-arrow {
+    body[data-main-action="download"] .file-card:hover:has(.open-action:hover) .download-action .download-arrow,
+    body[data-main-action="open"] .file-card:hover:has(.open-action:hover) .download-action .download-arrow {
       transform: translateY(0);
     }
 
@@ -1614,6 +1631,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.2s, visibility 0.2s;
+      outline: none;
     }
 
     .lightbox.active {
@@ -1704,6 +1722,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       font-size: 0.875rem;
       font-weight: 500;
       font-family: inherit;
+      line-height: 1;
+      box-sizing: border-box;
       color: var(--text-primary);
       background: var(--brand-bg);
       border: 1px solid var(--brand-border);
@@ -1765,6 +1785,15 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       border-color: rgba(255, 255, 255, 0.5);
     }
 
+    .lightbox-close:focus {
+      outline: none;
+    }
+
+    .lightbox-close:focus-visible {
+      outline: 2px solid white;
+      outline-offset: 2px;
+    }
+
     /* Mobile: hide meta */
     @media (max-width: 640px) {
       .lightbox-meta {
@@ -1808,7 +1837,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
 
   </style>
 </head>
-<body>
+<body data-main-action="${getMainAction(env)}">
   <a href="#main-content" class="skip-link">Skip to content</a>
   
   <!-- Screen reader announcements -->
@@ -1922,7 +1951,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     </div>
   </footer>
 
-  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer" data-page-slug="${pageSlug}" data-timestamp="${timestamp || ''}">
+  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer" tabindex="-1" data-page-slug="${pageSlug}" data-timestamp="${timestamp || ''}">
     <div class="lightbox-backdrop"></div>
     <div class="lightbox-header">
       <div class="lightbox-header-left">
@@ -2116,12 +2145,15 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       });
     }
 
-    // Share button
+    // Share button (header) - always copies base gallery URL without ?file param
     const shareBtn = document.getElementById('share-btn');
     if (shareBtn) {
       shareBtn.addEventListener('click', async () => {
         try {
-          await navigator.clipboard.writeText(window.location.href);
+          // Get base URL without file param
+          const url = new URL(window.location.href);
+          url.searchParams.delete('file');
+          await navigator.clipboard.writeText(url.toString());
           shareBtn.classList.add('copied');
           shareBtn.querySelector('.share-text').textContent = 'Copied!';
           announce('Link copied to clipboard');
@@ -2492,8 +2524,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         lightbox.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         
-        // Focus close button
-        setTimeout(() => closeBtn.focus(), 100);
+        // Update URL with file param (without adding to history)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('file', String(index));
+        history.replaceState(null, '', newUrl.toString());
+        
+        // Focus lightbox container for immediate keyboard nav (arrow keys)
+        setTimeout(() => lightbox.focus(), 100);
         
         announce('Viewing ' + name + ', ' + (index + 1) + ' of ' + cards.length);
       }
@@ -2507,6 +2544,11 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         lightbox.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
         currentIndex = -1;
+        
+        // Remove file param from URL (without adding to history)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('file');
+        history.replaceState(null, '', newUrl.toString());
         
         // Restore focus
         if (previousFocus) {
@@ -2556,8 +2598,10 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         if (e.key === 'Escape') {
           closeLightbox();
         } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
           navigate(-1);
         } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
           navigate(1);
         } else if (e.key === 'Tab') {
           // Focus trap
@@ -2565,7 +2609,15 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
           
-          if (e.shiftKey && document.activeElement === first) {
+          // If focus is on lightbox container (not a button), move to first/last focusable
+          if (document.activeElement === lightbox) {
+            e.preventDefault();
+            if (e.shiftKey) {
+              last.focus();
+            } else {
+              first.focus();
+            }
+          } else if (e.shiftKey && document.activeElement === first) {
             e.preventDefault();
             last.focus();
           } else if (!e.shiftKey && document.activeElement === last) {

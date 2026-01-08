@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.4.5] - 2026-01-08
+
+### Fixed
+
+- **Lightbox share button height**: Normalized button height with `line-height: 1` and `box-sizing: border-box` to match sibling download link
+- **Card hover states**: Download/Open buttons now only highlight on card hover when they're the main action. When `MAIN_ACTION="lightbox"` (default), the action buttons only highlight on direct hover, not card hover
+- **Lightbox keyboard focus**: Focus now goes to lightbox container (not close button) so arrow keys work immediately for prev/next navigation. No visible focus ring on the container.
+- **Lightbox arrow key navigation**: Arrow keys now properly prevent default behavior and work immediately after opening
+- **Lightbox focus trap**: Improved Tab handling when focus is on the lightbox container
+- **URL sync with lightbox state**: URL now updates when opening/closing lightbox (`?file=N` added/removed via `history.replaceState`). Header Share button always copies base gallery URL without `?file` param.
+
 ## [1.4.4] - 2026-01-08
 
 ### Changed
