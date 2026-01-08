@@ -24,9 +24,10 @@ interface Env {
   LOGO_URL?: string              // Alternative: URL to logo image
   FAVICON_URL: string            // Favicon URL
   
-  // Typography (Google Fonts family names)
-  FONT_BODY: string              // Body text font
-  FONT_DISPLAY: string           // Headings font
+  // Typography
+  FONT_BODY: string              // Body text font family name
+  FONT_DISPLAY: string           // Headings font family name
+  FONT_CSS_URL?: string          // Custom font CSS URL (if set, skips Google Fonts)
   
   // Behavior
   MAIN_ACTION?: string           // "download" (default) or "open" - what clicking card does
@@ -36,7 +37,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.1.3';
+const VERSION = '1.1.4';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default colors for optional env vars
@@ -45,6 +46,19 @@ const DEFAULT_SUCCESS_COLOR = '#16a34a';
 // Helper to get success color with fallback
 function getSuccessColor(env: Env): string {
   return env.SUCCESS_COLOR || DEFAULT_SUCCESS_COLOR;
+}
+
+// Helper to generate font loading HTML
+// Uses custom CSS URL if provided, otherwise loads from Google Fonts
+function getFontLoadingHtml(env: Env): string {
+  if (env.FONT_CSS_URL) {
+    // Custom font CSS - just load the provided URL
+    return `<link href="${env.FONT_CSS_URL}" rel="stylesheet">`;
+  }
+  // Default: Google Fonts with preconnect hints
+  return `<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(env.FONT_BODY)}:wght@300;400;500;600&family=${encodeURIComponent(env.FONT_DISPLAY)}:wght@400;500;700&display=swap" rel="stylesheet">`;
 }
 
 const GROUP_URL_PATTERN = /^https:\/\/([^\/]+)\/([a-f0-9-]{36})~(\d+)\/?$/;
@@ -354,9 +368,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   <meta name="description" content="File attachments for ${env.COMPANY_NAME} form submissions.">
   <title>Attachments (${count} file${count > 1 ? 's' : ''}) - ${env.COMPANY_NAME}</title>
   <link rel="icon" href="${env.FAVICON_URL}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(env.FONT_BODY)}:wght@300;400;500;600&family=${encodeURIComponent(env.FONT_DISPLAY)}:wght@400;500;700&display=swap" rel="stylesheet">
+  ${getFontLoadingHtml(env)}
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};
@@ -1807,9 +1819,7 @@ function generateErrorHtml(env: Env, error: string): string {
   <meta name="description" content="File attachments for ${env.COMPANY_NAME} form submissions.">
   <title>Error - ${env.COMPANY_NAME} Attachments</title>
   <link rel="icon" href="${env.FAVICON_URL}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(env.FONT_BODY)}:wght@300;400;500;600&family=${encodeURIComponent(env.FONT_DISPLAY)}:wght@400;500;700&display=swap" rel="stylesheet">
+  ${getFontLoadingHtml(env)}
   <style>
     :root {
       --brand-color: ${env.BRAND_COLOR};

@@ -34,8 +34,9 @@ interface Env {
   LOGO_SVG?: string          // Inline SVG logo
   LOGO_URL?: string          // Alternative: URL to logo
   FAVICON_URL: string        // Favicon URL
-  FONT_BODY: string          // Google Fonts body font
-  FONT_DISPLAY: string       // Google Fonts display font
+  FONT_BODY: string          // Body text font family name
+  FONT_DISPLAY: string       // Headings font family name
+  FONT_CSS_URL?: string      // Custom font CSS URL (skips Google Fonts)
   MAIN_ACTION?: string       // "download" (default) or "open" - card click behavior
   SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
 }
@@ -80,7 +81,7 @@ ALLOWED_CDN_HOSTS = "project1.ucarecdn.com,project2.ucarecdn.com"
 
 All HTML/CSS is generated inline in `generateHtml()`. The gallery uses:
 - CSS variables for branding (`--brand-color`, `--success-color`, etc.)
-- Google Fonts loaded from `env.FONT_BODY` and `env.FONT_DISPLAY`
+- Fonts loaded via `getFontLoadingHtml()` — Google Fonts by default, or custom CSS via `FONT_CSS_URL`
 - Inline `<script>` for interactivity (ZIP download, tracking, etc.)
 
 ### White-Label for Your Company
@@ -91,7 +92,7 @@ All HTML/CSS is generated inline in `generateHtml()`. The gallery uses:
 4. Set `BRAND_COLOR` to your primary brand color
 5. Provide `LOGO_SVG` (preferred) or `LOGO_URL`
 6. Update `FAVICON_URL`
-7. Choose appropriate `FONT_BODY` and `FONT_DISPLAY` from Google Fonts
+7. Choose fonts: either Google Fonts names in `FONT_BODY`/`FONT_DISPLAY`, or provide `FONT_CSS_URL` for custom fonts
 8. Deploy: `npm run deploy`
 
 ### Add New Endpoint

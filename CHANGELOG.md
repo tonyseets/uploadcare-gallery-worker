@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.4] - 2026-01-07
+
+### Added
+
+- `FONT_CSS_URL` env var for custom/brand fonts (use your own font CSS instead of Google Fonts)
+- `getFontLoadingHtml()` helper for centralized font loading logic
+
+### Changed
+
+- Font loading now supports either Google Fonts (default) or custom CSS URL
+- If `FONT_CSS_URL` is set, it loads that URL instead of Google Fonts
+
 ## [1.1.3] - 2026-01-07
 
 ### Added

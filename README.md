@@ -80,8 +80,9 @@ All branding is controlled via environment variables in `wrangler.toml`:
 | `FAVICON_URL` | ✅ | URL to your favicon |
 | `LOGO_SVG` | ⬜ | Inline SVG logo (preferred) |
 | `LOGO_URL` | ⬜ | URL to logo image (fallback) |
-| `FONT_BODY` | ✅ | Google Fonts family for body text |
-| `FONT_DISPLAY` | ✅ | Google Fonts family for headings |
+| `FONT_BODY` | ✅ | Font family name for body text |
+| `FONT_DISPLAY` | ✅ | Font family name for headings |
+| `FONT_CSS_URL` | ⬜ | Custom font CSS URL (if set, skips Google Fonts) |
 | `MAIN_ACTION` | ⬜ | Card click behavior: `"download"` (default) or `"open"` |
 | `SUCCESS_COLOR` | ⬜ | Success/confirmation color (default: `#16a34a` green) |
 

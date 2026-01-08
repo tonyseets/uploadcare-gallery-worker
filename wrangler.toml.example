@@ -36,10 +36,16 @@ FAVICON_URL = "https://yourcompany.com/favicon.ico"
 LOGO_SVG = ""
 LOGO_URL = "https://yourcompany.com/logo.png"
 
-# Typography (Google Fonts family names)
+# Typography
+# Option 1: Use Google Fonts (default) - set font family names
 # Browse: https://fonts.google.com
 FONT_BODY = "Inter"
 FONT_DISPLAY = "Inter"
+
+# Option 2: Use custom fonts - set FONT_CSS_URL to your font CSS file
+# This skips Google Fonts entirely. Host your CSS on any CDN (R2, S3, etc.)
+# Your CSS should define @font-face rules for the families named above.
+# FONT_CSS_URL = "https://yourcdn.com/fonts/brand-fonts.css"
 
 # Behavior
 # Card click behavior: "download" (default) or "open" (opens in new tab)
