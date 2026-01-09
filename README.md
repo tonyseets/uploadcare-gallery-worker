@@ -138,7 +138,8 @@ Set these to customize the color scheme (e.g., for dark themes). All color vars 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `JSZIP_URL` | cdnjs URL | JSZip library URL - self-host or use alternate CDN |
+| `JSZIP_URL` | cdnjs URL | JSZip library URL (primary) - self-host or use alternate CDN |
+| `JSZIP_FALLBACK_URL` | cdnjs URL | JSZip library fallback URL - used if primary fails to load |
 
 ### Cache Control (Optional)
 

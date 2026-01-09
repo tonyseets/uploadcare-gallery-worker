@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.2] - 2026-01-XX
+
+### Added
+
+- **JSZip fallback URL support** (`JSZIP_FALLBACK_URL`): Configure a fallback CDN URL for JSZip library. If the primary URL fails to load, the gallery automatically tries the fallback URL before falling back to the default cdnjs URL.
+
+### Changed
+
+- JSZip loading now includes error handling with automatic fallback mechanism for improved reliability
+
 ## [1.6.1] - 2026-01-09
 
 ### Fixed

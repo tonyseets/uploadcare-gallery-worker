@@ -71,7 +71,9 @@ FONT_DISPLAY = "Inter"
 
 # CDN URLs (optional - sensible defaults provided)
 # Self-host JSZip or use an alternative CDN if needed
+# If primary URL fails to load, fallback URL will be tried automatically
 # JSZIP_URL = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+# JSZIP_FALLBACK_URL = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
 
 # Cache control in seconds (optional - defaults shown)
 # CACHE_GALLERY_SECONDS = "3600"           # Gallery page: 1 hour

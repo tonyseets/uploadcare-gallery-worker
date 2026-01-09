@@ -47,7 +47,8 @@ interface Env {
   HEADER_BG?: string             // Header background (default: #ffffffcc)
   
   // CDN URLs (optional - sensible defaults provided)
-  JSZIP_URL?: string             // JSZip library URL (default: cdnjs)
+  JSZIP_URL?: string             // JSZip library URL (primary, default: cdnjs)
+  JSZIP_FALLBACK_URL?: string    // JSZip library fallback URL (if primary fails, default: cdnjs)
   
   // Cache control (seconds as strings - env vars are always strings)
   CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1 hour)
@@ -95,9 +96,12 @@ function getLinkHoverColor(env: Env): string {
   return env.LINK_HOVER_COLOR || 'inherit';
 }
 
-// Helper to get JSZip URL with fallback
-function getJsZipUrl(env: Env): string {
-  return env.JSZIP_URL || DEFAULT_JSZIP_URL;
+// Helper to get JSZip URLs (primary and fallback)
+function getJsZipUrls(env: Env): { primary: string; fallback: string } {
+  return {
+    primary: env.JSZIP_URL || DEFAULT_JSZIP_URL,
+    fallback: env.JSZIP_FALLBACK_URL || DEFAULT_JSZIP_URL
+  };
 }
 
 // Cache duration helpers
@@ -2122,7 +2126,27 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     </div>
   </div>` : ''}
 
-  ${enableZipDownload ? `<script src="${getJsZipUrl(env)}"></script>` : ''}
+  ${enableZipDownload ? (() => {
+    const urls = getJsZipUrls(env);
+    return `<script>
+    (function() {
+      const primaryUrl = ${JSON.stringify(urls.primary)};
+      const fallbackUrl = ${JSON.stringify(urls.fallback)};
+      let script = document.createElement('script');
+      script.src = primaryUrl;
+      script.onerror = function() {
+        console.warn('JSZip primary URL failed, trying fallback:', fallbackUrl);
+        script = document.createElement('script');
+        script.src = fallbackUrl;
+        script.onerror = function() {
+          console.error('JSZip failed to load from both primary and fallback URLs');
+        };
+        document.head.appendChild(script);
+      };
+      document.head.appendChild(script);
+    })();
+    </script>`;
+  })() : ''}
   <script>
     // Screen reader announcements helper
     function announce(message, assertive = false) {
