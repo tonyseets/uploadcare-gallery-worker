@@ -210,12 +210,17 @@ export function getStyles(env: Env): string {
       background: var(--brand-border);
     }
 
-    .page-title {
+    .page-title-link {
       font-family: '${env.FONT_DISPLAY}', sans-serif;
       font-size: 0.875rem;
       font-weight: 500;
       letter-spacing: 0.05em;
       color: var(--text-secondary);
+      text-decoration: none;
+    }
+    
+    .page-title-link:hover {
+      color: var(--link-hover-color);
     }
 
     /* Main content */
@@ -997,7 +1002,7 @@ export function getStyles(env: Env): string {
         box-shadow: none;
       }
 
-      .divider, .page-title {
+      .divider, .page-title-link {
         display: none;
       }
     }
