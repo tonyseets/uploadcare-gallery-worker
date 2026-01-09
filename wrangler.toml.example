@@ -36,6 +36,9 @@ FAVICON_URL = "https://yourcompany.com/favicon.ico"
 LOGO_SVG = ""
 LOGO_URL = "https://yourcompany.com/logo.png"
 
+# Header title text (next to logo)
+# HEADER_TITLE = "Attachments"
+
 # Typography
 # Option 1: Use Google Fonts (default) - set font family names
 # Browse: https://fonts.google.com

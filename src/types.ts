@@ -17,6 +17,7 @@ export interface Env {
   LOGO_SVG?: string              // Inline SVG logo (preferred)
   LOGO_URL?: string              // Alternative: URL to logo image
   FAVICON_URL: string            // Favicon URL
+  HEADER_TITLE?: string          // Header title text (default: "Attachments")
   
   // Typography
   FONT_BODY: string              // Body text font family name
