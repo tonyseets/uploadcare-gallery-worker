@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Demo Mode**: New `/demo` route to preview gallery branding without real Uploadcare files
+  - Enable via `ENABLE_DEMO = "true"` in wrangler.toml (disabled by default)
+  - Shows 8 sample files: 3 images (picsum.photos), video (MDN), audio (MDN), PDF (W3C), docx, zip
+  - Real playable video/audio for testing lightbox functionality
+  - Useful for testing branding setup or sharing gallery appearance with stakeholders
+
+### Changed
+
+- **Lightbox UX Improvements**:
+  - Card click now opens lightbox for ALL files (not just previewable ones) - icon-only files (docx, zip, etc.) show type icon in lightbox
+  - Nav buttons hidden at ends (prev hidden on first file, next hidden on last) instead of disabled
+  - Content width constrained to leave room for nav buttons - images/videos/PDFs no longer go under arrows
+  - Audio player: square corners (consistent with other lightbox elements)
+  - Play icon optically centered in audio player button
+
+- **Internal Architecture**: Refactored monolithic `src/index.ts` (3680 lines) into 13 focused modules:
+  - `src/types.ts` - Type definitions
+  - `src/utils.ts` - Shared utilities
+  - `src/env.ts` - Environment helpers and constants
+  - `src/validation.ts` - URL validation
+  - `src/icons.ts` - File type icons
+  - `src/files.ts` - File handling utilities
+  - `src/fonts.ts` - Font loading
+  - `src/connect-script.ts` - UC Gallery Connect script
+  - `src/html/gallery.ts` - Gallery HTML generation
+  - `src/html/error.ts` - Error page HTML generation
+  - `src/html/styles.ts` - Gallery CSS styles
+  - `src/html/scripts.ts` - Gallery client-side JavaScript
+  - `src/html/index.ts` - HTML module exports
+  - `src/index.ts` - Main handler (~120 lines)
+- This is an internal refactoring only - no user-facing changes, API changes, or functional differences. HTML output is byte-identical to the previous version.
+
 ## [1.8.0] - 2026-01-09
 
 ### Security

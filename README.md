@@ -164,6 +164,7 @@ Disable specific UI features by setting to `"false"`:
 | `ENABLE_OPEN_ALL` | `true` | Show "Open All in Tabs" button |
 | `ENABLE_SHARE_BUTTON` | `true` | Show "Share" button in header |
 | `ENABLE_LIGHTBOX` | `true` | Enable lightbox modal for images/videos |
+| `ENABLE_DEMO` | `false` | Enable `/demo` route for branding preview |
 
 ### Security Limits (Optional)
 
@@ -207,6 +208,8 @@ FONT_DISPLAY = "Inter"
 |------|-------------|---------|
 | `/?url=...` | Gallery viewer | 1 hour |
 | `/uc-gallery-connect.js` | Client-side URL transformer | ETag-based (auto-invalidates on deploy) |
+| `/demo` | Branding preview (requires `ENABLE_DEMO=true`) | No cache |
+| `/health` | Health check | No cache |
 
 ## Client-Side Integration
 
@@ -313,6 +316,28 @@ npm run deploy
 # View live logs
 npm run tail
 ```
+
+### Demo Mode
+
+Preview your gallery branding without needing real Uploadcare files:
+
+1. Enable demo mode in `wrangler.toml`:
+   ```toml
+   ENABLE_DEMO = "true"
+   ```
+
+2. Access the demo:
+   ```bash
+   # Local
+   open "http://localhost:8787/demo"
+
+   # Production (if enabled)
+   open "https://your-worker.workers.dev/demo"
+   ```
+
+The demo shows a variety of file types (images, video, audio, PDF, documents) with your configured branding. Great for testing theme colors, typography, and layout before deploying.
+
+> **Note:** Downloads won't work in demo mode (placeholder URLs). The lightbox and grid features work normally.
 
 ## How It Works
 

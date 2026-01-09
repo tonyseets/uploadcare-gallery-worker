@@ -13,75 +13,75 @@ Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Tw
 
 | File | Purpose |
 |------|---------|
-| `src/index.ts` | Main worker code (all logic in one file) |
-| `uc-gallery-connect.example.js` | Reference copy of the connect script (canonical version is in index.ts) |
+| `src/index.ts` | Main worker handler (~120 lines) - routes and request handling |
+| `src/types.ts` | Type definitions (Env, FileInfo, ValidationResult) |
+| `src/utils.ts` | Shared utilities (escapeHtml) |
+| `src/env.ts` | Environment helpers, constants, VERSION |
+| `src/validation.ts` | URL validation logic |
+| `src/icons.ts` | File type icon SVG generation |
+| `src/files.ts` | File fetching, extension checks, formatters |
+| `src/fonts.ts` | Font loading HTML generation |
+| `src/connect-script.ts` | UC Gallery Connect script constant |
+| `src/html/gallery.ts` | Gallery page HTML generation |
+| `src/html/error.ts` | Error page HTML generation |
+| `src/html/styles.ts` | Gallery CSS styles |
+| `src/html/scripts.ts` | Gallery client-side JavaScript |
+| `src/html/index.ts` | HTML module exports |
+| `uc-gallery-connect.example.js` | Reference copy of the connect script (canonical version is in connect-script.ts) |
 | `wrangler.toml.example` | Template for configuration (copy to wrangler.toml) |
 | `wrangler.toml` | Local config (gitignored - contains your specific branding) |
 | `CHANGELOG.md` | Version history (update when making notable changes) |
 
 ## Code Structure
 
-The worker is intentionally simple — single file, no external dependencies at runtime.
+The worker is organized into focused modules for maintainability. No external dependencies at runtime.
+
+### Module Structure
+
+```
+src/
+├── index.ts              # Main handler + routes (~120 lines)
+├── types.ts              # Env, FileInfo, ValidationResult
+├── utils.ts              # escapeHtml + shared utilities
+├── env.ts                # VERSION, constants, 25+ helpers
+├── validation.ts         # validateUrl, getHostFromUrl
+├── icons.ts              # getFileTypeIconSvg
+├── files.ts              # File fetching, extensions, formatters
+├── fonts.ts              # getFontLoadingHtml
+├── connect-script.ts     # UC_GALLERY_CONNECT_SCRIPT
+└── html/
+    ├── index.ts          # Re-exports generateHtml, generateErrorHtml
+    ├── gallery.ts        # generateHtml
+    ├── error.ts          # generateErrorHtml
+    ├── styles.ts         # All CSS
+    └── scripts.ts        # All client JS
+```
+
+### Module Dependencies
+
+- `index.ts` imports from: `types`, `validation`, `files`, `html`, `connect-script`, `env`
+- `html/gallery.ts` imports from: `types`, `env`, `utils`, `files`, `icons`, `fonts`, `html/styles`, `html/scripts`
+- `html/error.ts` imports from: `types`, `env`, `utils`, `fonts`
+- `env.ts` imports from: `types`, `utils`
+- `validation.ts` imports from: `types`, `env`
+- `files.ts` imports from: `types`, `env`, `icons`
+- `icons.ts` imports from: `files` (for extension checks)
+
+### Key Types and Functions
 
 ```typescript
 // Environment interface (all config via wrangler.toml [vars])
-interface Env {
-  ALLOWED_CDN_HOSTS: string  // Comma-separated CDN hostnames
-  COMPANY_NAME: string       // Display name
-  COMPANY_URL: string        // Company website
-  WORKER_URL: string         // This worker's URL
-  BRAND_COLOR: string        // Primary color (hex)
-  LOGO_SVG?: string          // Inline SVG logo
-  LOGO_URL?: string          // Alternative: URL to logo
-  FAVICON_URL: string        // Favicon URL
-  FONT_BODY: string          // Body text font family name
-  FONT_DISPLAY: string       // Headings font family name
-  FONT_CSS_URL?: string      // Custom font CSS URL (skips Google Fonts)
-  MAIN_ACTION?: string       // "lightbox" (default), "download", or "open" - card click behavior
-  SUCCESS_COLOR?: string     // Success/confirmation color (default: #16a34a green)
-  LINK_HOVER_COLOR?: string  // Link hover color (default: inherit = no change)
-  // Theme colors (all optional - light theme defaults)
-  BG_COLOR?: string          // Page background (default: #ffffff)
-  PANEL_COLOR?: string       // Panel backgrounds (default: #f9fafb)
-  SURFACE_COLOR?: string     // Interactive surfaces (default: #f3f4f6)
-  BORDER_COLOR?: string      // Borders (default: #e5e7eb)
-  TEXT_COLOR?: string        // Primary text (default: #111827)
-  TEXT_SECONDARY_COLOR?: string  // Secondary text (default: #6b7280)
-  TEXT_MUTED_COLOR?: string  // Muted text (default: #9ca3af)
-  HEADER_BG?: string         // Header background (default: #ffffffcc)
-  // CDN URLs
-  JSZIP_URL?: string             // JSZip library URL (default: cdnjs)
-  JSZIP_FALLBACK_URL?: string    // JSZip library fallback URL (if primary fails, default: cdnjs)
-  JSZIP_INTEGRITY?: string       // SRI hash for custom JSZIP_URL (default provided for cdnjs, set empty to disable)
-  // Cache control (seconds as strings)
-  CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1hr)
-  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 60s for ETag revalidation)
-  CACHE_SCRIPT_CDN_SECONDS?: string     // Script CDN cache (default: 604800 = 7 days)
-  // Feature toggles ("true"/"false", default: "true")
-  ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button
-  ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button
-  ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header
-  ENABLE_LIGHTBOX?: string       // Enable lightbox modal (default: true)
-  // Lightbox preview options
-  ENABLE_PDF_PREVIEW?: string    // Embed PDFs in lightbox iframe (default: true)
-  ENABLE_AUDIO_PREVIEW?: string  // Show audio player in lightbox (default: true)
-  VIDEO_AUTOPLAY?: string        // Auto-play videos in lightbox (default: false)
-  // Grid layout
-  DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", or "4" (default: "2")
-  IMAGE_FIT?: string             // Thumbnail fit: "contain" (letterbox) or "cover" (crop)
-  // Security limits
-  MAX_GROUP_FILE_COUNT?: string  // Max files in a group URL (default: 50)
-}
+interface Env { ... }  // See src/types.ts for full definition
 
-// URL validation (uses env.ALLOWED_CDN_HOSTS)
+// URL validation
 function validateUrl(url: string, env: Env): ValidationResult
 
 // HTML generation (uses env for all branding)
-function generateHtml(env: Env, ...): string
+function generateHtml(env: Env, host: string, groupId: string, count: number, originalUrl: string, pageSlug: string, timestamp: number | null, fileInfos: FileInfo[]): string
 function generateErrorHtml(env: Env, error: string): string
 
 // File info fetching
-async function fetchFileInfos(...): Promise<FileInfo[]>
+async function fetchFileInfos(host: string, groupId: string, count: number): Promise<FileInfo[]>
 
 // Main handler
 export default { fetch(request: Request, env: Env): Promise<Response> }
@@ -102,8 +102,8 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 
 ### Update the Uploader Script
 
-1. Edit the `UC_GALLERY_CONNECT_SCRIPT` constant in `src/index.ts`
-2. Bump the `VERSION` constant (used for ETag cache invalidation)
+1. Edit the `UC_GALLERY_CONNECT_SCRIPT` constant in `src/connect-script.ts`
+2. Bump the `VERSION` constant in `src/env.ts` (used for ETag cache invalidation)
 3. Optionally update `uc-gallery-connect.example.js` for reference
 4. Deploy: `npm run deploy`
 
@@ -240,17 +240,109 @@ export default {
 
 ## Testing
 
+### Prerequisites
+
+This is a **template repo** — you must create a `wrangler.toml` before running locally:
+
 ```bash
-# Local development
+# One-time setup: copy the example config
+cp wrangler.toml.example wrangler.toml
+
+# Edit wrangler.toml to set at minimum:
+# - ALLOWED_CDN_HOSTS (your Uploadcare CDN hostname)
+# - COMPANY_NAME, COMPANY_URL, WORKER_URL
+# - BRAND_COLOR, FAVICON_URL
+```
+
+### Local Development
+
+```bash
+# Start the dev server (default port 8787)
 npm run dev
 
-# Type check
-npx tsc --noEmit
-
-# Test locally (replace with your CDN host)
-curl "http://localhost:8787/?url=https://your-project.ucarecdn.com/UUID~3/"
-curl "http://localhost:8787/uc-gallery-connect.js"
+# Or specify a different port if 8787 is in use
+npm run dev -- --port 8788
 ```
+
+The dev server runs at `http://localhost:8787` (or your specified port).
+
+### Type Checking
+
+```bash
+npx tsc --noEmit
+```
+
+### Test Endpoints
+
+Once the dev server is running, test these endpoints:
+
+```bash
+# Health check (should return JSON with version)
+curl "http://localhost:8787/health"
+
+# UC Gallery Connect script (should return JavaScript)
+curl "http://localhost:8787/uc-gallery-connect.js"
+
+# Gallery page (replace with your CDN host and a real group UUID)
+curl "http://localhost:8787/?url=https://your-project.ucarecdn.com/UUID~3/"
+
+# Or open in browser for visual testing
+open "http://localhost:8787/?url=https://your-project.ucarecdn.com/UUID~3/"
+```
+
+### Visual Testing Checklist
+
+When testing in browser, verify:
+- [ ] Gallery renders with correct branding (logo, colors, fonts)
+- [ ] File cards display thumbnails or type icons
+- [ ] Lightbox opens on card click (for images/video/pdf/audio)
+- [ ] Lightbox navigation works (arrows, keyboard)
+- [ ] Download button works
+- [ ] ZIP download works (if enabled)
+- [ ] Grid column selector works
+- [ ] Share button copies URL (if enabled)
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "Missing entry-point" error | Create `wrangler.toml` from the example |
+| "Address already in use" | Use `--port 8788` or kill existing process: `lsof -i :8787` then `kill <PID>` |
+| Gallery shows error page | Check `ALLOWED_CDN_HOSTS` matches your test URL's hostname |
+| Fonts not loading | Check `FONT_BODY`/`FONT_DISPLAY` are valid Google Font names |
+
+### Demo Mode
+
+Preview gallery branding/UI without real Uploadcare files. Disabled by default.
+
+**Enable demo mode:**
+
+1. Add to `wrangler.toml`:
+   ```toml
+   ENABLE_DEMO = "true"
+   ```
+
+2. Access the demo:
+   ```bash
+   # Local
+   open "http://localhost:8787/demo"
+   
+   # Production (if enabled)
+   open "https://your-worker.workers.dev/demo"
+   ```
+
+**What the demo shows:**
+- 3 images with real thumbnails (via picsum.photos)
+- Video, audio, PDF with icon previews
+- Generic files (.docx, .zip) with type icons
+- Full lightbox navigation
+
+**Use cases:**
+- Test branding setup before having real files
+- Share gallery appearance with stakeholders
+- Verify theme colors and typography
+
+Note: Downloads won't work in demo mode (placeholder URLs). This is expected.
 
 ## Deployment
 

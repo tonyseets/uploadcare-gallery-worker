@@ -87,6 +87,10 @@ FONT_DISPLAY = "Inter"
 # ENABLE_SHARE_BUTTON = "true"    # Show "Share" button in header
 # ENABLE_LIGHTBOX = "true"        # Enable lightbox for images/videos
 
+# Demo mode - enable /demo route to preview branding without real Uploadcare files
+# Useful for testing setup locally or sharing gallery appearance with stakeholders
+# ENABLE_DEMO = "true"
+
 # Lightbox preview options
 # ENABLE_PDF_PREVIEW = "true"     # Embed PDFs in lightbox iframe (vs show icon)
 # ENABLE_AUDIO_PREVIEW = "true"   # Show audio player in lightbox (vs show icon)
