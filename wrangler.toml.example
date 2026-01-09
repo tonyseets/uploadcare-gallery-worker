@@ -84,6 +84,11 @@ FONT_DISPLAY = "Inter"
 # ENABLE_SHARE_BUTTON = "true"    # Show "Share" button in header
 # ENABLE_LIGHTBOX = "true"        # Enable lightbox for images/videos
 
+# Lightbox preview options
+# ENABLE_PDF_PREVIEW = "true"     # Embed PDFs in lightbox iframe (vs show icon)
+# ENABLE_AUDIO_PREVIEW = "true"   # Show audio player in lightbox (vs show icon)
+# VIDEO_AUTOPLAY = "false"        # Auto-play videos when opened in lightbox
+
 # Gallery layout options
 # DEFAULT_GRID_COLUMNS = "2"      # Default columns: "1", "2", "3", or "4"
 # IMAGE_FIT = "contain"           # Thumbnail fit: "contain" (letterbox) or "cover" (crop)

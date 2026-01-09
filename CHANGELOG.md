@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.0] - 2026-01-08
+
+### Added
+
+- **Lightbox All-File Navigation**: Navigate through ALL files in lightbox, not just images/videos
+  - Non-previewable files show their file type icon + filename
+  - Arrow keys and nav buttons cycle through entire gallery
+- **PDF Preview in Lightbox** (`ENABLE_PDF_PREVIEW`): PDFs embed in iframe instead of showing icon (default: true)
+- **Audio Player in Lightbox** (`ENABLE_AUDIO_PREVIEW`): Custom branded audio player with play/pause, progress bar, and time display (default: true)
+- **Video Autoplay Toggle** (`VIDEO_AUTOPLAY`): Control whether videos auto-play when opened in lightbox (default: false)
+- **Lightbox trigger on all files**: Expand button now appears on ALL file cards, not just previewable ones
+
+### Changed
+
+- Lightbox navigation now includes all files regardless of preview type
+- Card clicks for icon-only files still trigger download (as before), but lightbox button opens them in lightbox
+- Media (video/audio) now properly pauses when navigating to next/prev file or closing lightbox
+
+### Technical
+
+- New env vars: `ENABLE_PDF_PREVIEW`, `ENABLE_AUDIO_PREVIEW`, `VIDEO_AUTOPLAY`
+- New helpers: `isPdfPreviewEnabled()`, `isAudioPreviewEnabled()`, `isVideoAutoplayEnabled()`, `isAudioExtension()`, `getPreviewType()`
+- New data attributes: `data-lightbox-type`, `data-lightbox-ext` (replaces `data-lightbox-video`)
+- Client-side `getIconSvgForExt()` function for lightbox icon fallback
+- New CSS for `.lightbox-icon-fallback`, `.lightbox-audio-player`, and iframe styling
+
 ## [1.4.5] - 2026-01-08
 
 ### Fixed

@@ -59,7 +59,11 @@ interface Env {
   ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button
   ENABLE_OPEN_ALL?: string       // Show "Open All in Tabs" button
   ENABLE_SHARE_BUTTON?: string   // Show "Share" button in header
-  ENABLE_LIGHTBOX?: string       // Enable lightbox modal for images/videos (default: true)
+  ENABLE_LIGHTBOX?: string       // Enable lightbox modal (default: true)
+  // Lightbox preview options
+  ENABLE_PDF_PREVIEW?: string    // Embed PDFs in lightbox iframe (default: true)
+  ENABLE_AUDIO_PREVIEW?: string  // Show audio player in lightbox (default: true)
+  VIDEO_AUTOPLAY?: string        // Auto-play videos in lightbox (default: false)
   // Grid layout
   DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", or "4" (default: "2")
   IMAGE_FIT?: string             // Thumbnail fit: "contain" (letterbox) or "cover" (crop)
@@ -111,15 +115,18 @@ All HTML/CSS is generated inline in `generateHtml()`. The gallery uses:
 
 ### Lightbox Modal
 
-The lightbox allows users to view images and videos in a fullscreen overlay without leaving the page.
+The lightbox allows users to navigate through ALL files in a fullscreen overlay. Each file type renders differently:
 
-**Supported file types:**
-- Images: jpg, jpeg, png, gif, webp, svg, bmp (displayed as `<img>`)
-- Videos: mp4, webm, mov (displayed as `<video>` with controls)
-- Other files: Open in new tab (no lightbox preview)
+**Supported preview types:**
+- **Images** (jpg, jpeg, png, gif, webp, svg, bmp): Displayed as `<img>`
+- **Videos** (mp4, webm, mov): Displayed as `<video>` with controls
+- **PDFs**: Embedded in `<iframe>` when `ENABLE_PDF_PREVIEW=true`
+- **Audio** (mp3, wav, flac, aac, ogg, m4a, wma, aiff): Custom branded audio player when `ENABLE_AUDIO_PREVIEW=true`
+- **Other files**: Large file type icon + filename (still navigable, download button works)
 
 **Features:**
-- Expand button appears on hover in top-right corner of image/video cards
+- Expand button appears on hover in top-right corner of ALL file cards
+- Navigate through entire gallery with arrow keys or nav buttons
 - Backdrop blur effect
 - Close via: X button, backdrop click, or Escape key
 - Download button for quick file download
@@ -127,18 +134,22 @@ The lightbox allows users to view images and videos in a fullscreen overlay with
 - Auto-opens to specific file when `?file=N` param is present
 - Focus trap for keyboard accessibility
 - Screen reader announcements
+- Media (video/audio) pauses when navigating or closing
 
 **Configuration:**
 - `ENABLE_LIGHTBOX`: Set to `"false"` to disable lightbox entirely
+- `ENABLE_PDF_PREVIEW`: Set to `"false"` to show PDF icon instead of iframe (default: true)
+- `ENABLE_AUDIO_PREVIEW`: Set to `"false"` to show audio icon instead of player (default: true)
+- `VIDEO_AUTOPLAY`: Set to `"true"` to auto-play videos when opened (default: false)
 - `MAIN_ACTION`: Controls card click behavior:
-  - `"lightbox"` (default): Clicking card opens lightbox for previewable files
+  - `"lightbox"` (default): Clicking card opens lightbox for inline-previewable files (image/video/pdf/audio)
   - `"download"`: Clicking card downloads file (lightbox still accessible via expand button)
   - `"open"`: Clicking card opens file in new tab (lightbox still accessible via expand button)
 
 **Fallback behavior:**
 - If `MAIN_ACTION="lightbox"` but `ENABLE_LIGHTBOX="false"`, falls back to download
-- If `MAIN_ACTION="lightbox"` on non-previewable file (PDF, doc), falls back to download
-- The expand button in card corner always opens lightbox (regardless of `MAIN_ACTION`) when lightbox is enabled
+- If `MAIN_ACTION="lightbox"` on icon-only file (doc, zip, etc.), card click downloads (but lightbox button still opens lightbox)
+- The expand button in card corner always opens lightbox for ALL files when lightbox is enabled
 
 ### Grid Layout
 
@@ -226,9 +237,13 @@ To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.
 
 4. **CORS on uc-gallery-connect.js**: Has `Access-Control-Allow-Origin: *` because it's loaded cross-origin from various sites.
 
-5. **Lightbox video formats**: Only mp4, webm, and mov are shown in lightbox (browser-native formats). Other video formats (avi, mkv, flv, etc.) open in new tab because browsers can't play them natively.
+5. **Lightbox video formats**: Only mp4, webm, and mov can play inline in lightbox (browser-native formats). Other video formats show icon fallback but are still navigable.
 
 6. **Grid preference localStorage**: User grid preference is stored in `localStorage` under key `gallery-grid-columns`. The FOUC prevention script reads this synchronously in `<head>` to prevent layout shift.
+
+7. **PDF iframe in lightbox**: Some browsers may block PDFs from third-party domains. If PDFs don't load, users can use the download button.
+
+8. **Audio player in lightbox**: The custom audio player uses the native `<audio>` element. Codec support depends on the browser.
 
 ## Design Philosophy
 

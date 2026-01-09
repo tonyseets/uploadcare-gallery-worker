@@ -63,10 +63,15 @@ interface Env {
   // Gallery layout options
   DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", "4" (default: "2")
   IMAGE_FIT?: string             // Thumbnail fit: "contain" or "cover" (default: "contain")
+  
+  // Lightbox preview options
+  ENABLE_PDF_PREVIEW?: string    // Embed PDFs in lightbox iframe (default: true)
+  ENABLE_AUDIO_PREVIEW?: string  // Show audio player in lightbox (default: true)
+  VIDEO_AUTOPLAY?: string        // Auto-play videos in lightbox (default: false)
 }
 
 // Constants
-const VERSION = '1.4.4';
+const VERSION = '1.5.0';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default CDN URLs
@@ -135,6 +140,18 @@ function getImageFit(env: Env): string {
 
 function isLightboxEnabled(env: Env): boolean {
   return env.ENABLE_LIGHTBOX !== 'false';
+}
+
+function isPdfPreviewEnabled(env: Env): boolean {
+  return isFeatureEnabled(env.ENABLE_PDF_PREVIEW);
+}
+
+function isAudioPreviewEnabled(env: Env): boolean {
+  return isFeatureEnabled(env.ENABLE_AUDIO_PREVIEW);
+}
+
+function isVideoAutoplayEnabled(env: Env): boolean {
+  return env.VIDEO_AUTOPLAY === 'true'; // Default false, must explicitly enable
 }
 
 // Get effective main action, with fallback logic
@@ -248,6 +265,20 @@ function isVideoExtension(ext: string): boolean {
 
 function isPdfExtension(ext: string): boolean {
   return ext === 'pdf';
+}
+
+function isAudioExtension(ext: string): boolean {
+  return ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'aiff'].includes(ext);
+}
+
+// Determine what type of preview to show in lightbox
+// Returns: 'image' | 'video' | 'pdf' | 'audio' | 'icon'
+function getPreviewType(ext: string, env: Env): string {
+  if (isImageExtension(ext)) return 'image';
+  if (['mp4', 'webm', 'mov'].includes(ext)) return 'video';
+  if (isPdfExtension(ext) && isPdfPreviewEnabled(env)) return 'pdf';
+  if (isAudioExtension(ext) && isAudioPreviewEnabled(env)) return 'audio';
+  return 'icon';
 }
 
 /**
@@ -450,23 +481,25 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       thumbnailHtml = `<div class="fallback-icon">${getFileTypeIconSvg(ext)}</div>`;
     }
     
-    // Lightbox data for previewable files
+    // Lightbox: ALL files can be navigated in lightbox when enabled
     const lightboxEnabled = isLightboxEnabled(env);
-    const canPreview = lightboxEnabled && isLightboxPreviewable(ext);
+    const previewType = getPreviewType(ext, env); // 'image' | 'video' | 'pdf' | 'audio' | 'icon'
+    const canPreviewInline = previewType !== 'icon'; // Can render content inline (not just icon)
     
     // Determine main action for this card
     const mainAction = getMainAction(env);
-    // For non-previewable files with lightbox action, fall back to download
-    const effectiveAction = (mainAction === 'lightbox' && !canPreview) ? 'download' : mainAction;
+    // For non-inline-previewable files with lightbox action, fall back to download for card click
+    const effectiveAction = (mainAction === 'lightbox' && !canPreviewInline) ? 'download' : mainAction;
     const cardMainHref = effectiveAction === 'open' ? fileUrl : downloadUrl;
     const cardMainTarget = effectiveAction === 'open' ? ' target="_blank" rel="noopener noreferrer"' : '';
-    const isVideo = isVideoExtension(ext) && ['mp4', 'webm', 'mov'].includes(ext);
-    const lightboxAttrs = canPreview 
-      ? ` data-lightbox="true" data-lightbox-src="${fileUrl}" data-lightbox-download="${downloadUrl}" data-lightbox-video="${isVideo}" data-lightbox-name="${escapedName}"`
+    
+    // ALL files get lightbox attributes when lightbox is enabled (enables navigation through all files)
+    const lightboxAttrs = lightboxEnabled 
+      ? ` data-lightbox="true" data-lightbox-src="${fileUrl}" data-lightbox-download="${downloadUrl}" data-lightbox-type="${previewType}" data-lightbox-name="${escapedName}" data-lightbox-ext="${ext}"`
       : '';
     
-    // Lightbox trigger button (only for previewable files)
-    const lightboxTriggerHtml = canPreview 
+    // Lightbox trigger button (shown for ALL files when lightbox is enabled)
+    const lightboxTriggerHtml = lightboxEnabled 
       ? `<button type="button" class="lightbox-trigger" aria-label="View ${escapedName} in lightbox" data-lightbox-index="${i}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
         </button>`
@@ -1835,6 +1868,110 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       right: 1rem;
     }
 
+    /* PDF iframe in lightbox */
+    .lightbox-content iframe {
+      width: 90vw;
+      height: calc(100vh - 8rem);
+      max-width: 1200px;
+      border: none;
+      border-radius: 4px;
+      background: white;
+    }
+
+    /* Icon fallback for non-previewable files */
+    .lightbox-icon-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      color: white;
+    }
+    .lightbox-icon-fallback svg {
+      width: 96px;
+      height: 96px;
+      stroke: white;
+      opacity: 0.9;
+    }
+    .lightbox-icon-fallback .fallback-filename {
+      font-size: 1.125rem;
+      font-weight: 500;
+      max-width: 80vw;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    /* Audio player in lightbox */
+    .lightbox-audio-player {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      backdrop-filter: blur(8px);
+      min-width: 320px;
+      max-width: 90vw;
+    }
+    .lightbox-audio-player .audio-icon {
+      width: 64px;
+      height: 64px;
+      stroke: white;
+    }
+    .lightbox-audio-player .audio-filename {
+      font-size: 1rem;
+      font-weight: 500;
+      color: white;
+      max-width: 100%;
+      text-align: center;
+      word-break: break-word;
+    }
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+    }
+    .audio-play-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--brand-color);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .audio-play-btn:hover {
+      opacity: 0.9;
+    }
+    .audio-progress {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+    .audio-progress-fill {
+      height: 100%;
+      background: var(--brand-color);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .audio-time {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.8);
+      font-variant-numeric: tabular-nums;
+      min-width: 80px;
+      text-align: right;
+    }
+
   </style>
 </head>
 <body data-main-action="${getMainAction(env)}">
@@ -2455,14 +2592,144 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       let currentIndex = -1;
       let previousFocus = null;
       
+      // Client-side icon SVGs for lightbox fallback
+      function getIconSvgForExt(ext) {
+        const e = ext.toLowerCase();
+        // Video
+        if (['mp4', 'mov', 'avi', 'webm', 'mkv', 'flv', 'wmv', 'm4v', '3gp'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>';
+        }
+        // PDF
+        if (e === 'pdf') {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
+        }
+        // Audio
+        if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'aiff'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
+        }
+        // Word docs
+        if (['doc', 'docx', 'rtf', 'odt'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>';
+        }
+        // Spreadsheets
+        if (['xls', 'xlsx', 'csv', 'ods'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><line x1="12" y1="9" x2="12" y2="21"></line></svg>';
+        }
+        // Presentations
+        if (['ppt', 'pptx', 'odp', 'key'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+        }
+        // Archives
+        if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>';
+        }
+        // Code files
+        if (['js', 'ts', 'py', 'rb', 'java', 'c', 'cpp', 'h', 'css', 'html', 'json', 'xml', 'yml', 'yaml', 'sh', 'sql'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
+        }
+        // Text files
+        if (['txt', 'md', 'log'].includes(e)) {
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>';
+        }
+        // Default file icon
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+      }
+      
+      // Audio player HTML generator
+      function createAudioPlayerHtml(src, name) {
+        return '<div class="lightbox-audio-player">' +
+          '<svg class="audio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+            '<path d="M9 18V5l12-2v13"></path>' +
+            '<circle cx="6" cy="18" r="3"></circle>' +
+            '<circle cx="18" cy="16" r="3"></circle>' +
+          '</svg>' +
+          '<div class="audio-filename">' + name + '</div>' +
+          '<div class="audio-controls">' +
+            '<button class="audio-play-btn" aria-label="Play">' +
+              '<svg class="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>' +
+              '<svg class="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>' +
+            '</button>' +
+            '<div class="audio-progress"><div class="audio-progress-fill"></div></div>' +
+            '<span class="audio-time">0:00 / 0:00</span>' +
+          '</div>' +
+          '<audio src="' + src + '" preload="metadata"></audio>' +
+        '</div>';
+      }
+      
+      // Initialize audio player event listeners
+      function initAudioPlayer(container) {
+        const audio = container.querySelector('audio');
+        const playBtn = container.querySelector('.audio-play-btn');
+        const playIcon = container.querySelector('.play-icon');
+        const pauseIcon = container.querySelector('.pause-icon');
+        const progress = container.querySelector('.audio-progress');
+        const progressFill = container.querySelector('.audio-progress-fill');
+        const timeDisplay = container.querySelector('.audio-time');
+        
+        function formatTime(sec) {
+          if (!isFinite(sec)) return '0:00';
+          const m = Math.floor(sec / 60);
+          const s = Math.floor(sec % 60).toString().padStart(2, '0');
+          return m + ':' + s;
+        }
+        
+        audio.addEventListener('loadedmetadata', () => {
+          timeDisplay.textContent = '0:00 / ' + formatTime(audio.duration);
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+          const pct = (audio.currentTime / audio.duration) * 100;
+          progressFill.style.width = pct + '%';
+          timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+        });
+        
+        audio.addEventListener('ended', () => {
+          playIcon.style.display = '';
+          pauseIcon.style.display = 'none';
+          playBtn.setAttribute('aria-label', 'Play');
+        });
+        
+        playBtn.addEventListener('click', () => {
+          if (audio.paused) {
+            audio.play();
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = '';
+            playBtn.setAttribute('aria-label', 'Pause');
+          } else {
+            audio.pause();
+            playIcon.style.display = '';
+            pauseIcon.style.display = 'none';
+            playBtn.setAttribute('aria-label', 'Play');
+          }
+        });
+        
+        progress.addEventListener('click', (e) => {
+          const rect = progress.getBoundingClientRect();
+          const pct = (e.clientX - rect.left) / rect.width;
+          audio.currentTime = pct * audio.duration;
+        });
+      }
+      
+      // Stop any playing media in lightbox content
+      function stopMedia() {
+        const video = content.querySelector('video');
+        const audio = content.querySelector('audio');
+        if (video) video.pause();
+        if (audio) audio.pause();
+      }
+      
       function openLightbox(index) {
         if (index < 0 || index >= cards.length) return;
         
         const card = cards[index];
         const src = card.dataset.lightboxSrc;
         const downloadUrl = card.dataset.lightboxDownload;
-        const isVideo = card.dataset.lightboxVideo === 'true';
+        const previewType = card.dataset.lightboxType || 'icon';
         const name = card.dataset.lightboxName;
+        const ext = card.dataset.lightboxExt || '';
+        
+        // Stop any previously playing media before switching
+        stopMedia();
         
         currentIndex = index;
         previousFocus = document.activeElement;
@@ -2470,19 +2737,33 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         // Clear previous content
         content.innerHTML = '';
         
-        // Create media element
-        if (isVideo) {
-          const video = document.createElement('video');
-          video.src = src;
-          video.controls = true;
-          video.autoplay = true;
-          video.setAttribute('aria-label', name);
-          content.appendChild(video);
-        } else {
+        // Create appropriate element based on preview type
+        if (previewType === 'image') {
           const img = document.createElement('img');
           img.src = src;
           img.alt = name;
           content.appendChild(img);
+        } else if (previewType === 'video') {
+          const video = document.createElement('video');
+          video.src = src;
+          video.controls = true;
+          video.autoplay = ${isVideoAutoplayEnabled(env)};
+          video.setAttribute('aria-label', name);
+          content.appendChild(video);
+        } else if (previewType === 'pdf') {
+          const iframe = document.createElement('iframe');
+          iframe.src = src;
+          iframe.title = name;
+          content.appendChild(iframe);
+        } else if (previewType === 'audio') {
+          content.innerHTML = createAudioPlayerHtml(src, name);
+          initAudioPlayer(content);
+        } else {
+          // Icon fallback for non-previewable files
+          const fallback = document.createElement('div');
+          fallback.className = 'lightbox-icon-fallback';
+          fallback.innerHTML = getIconSvgForExt(ext) + '<span class="fallback-filename">' + name + '</span>';
+          content.appendChild(fallback);
         }
         
         // Update download action
@@ -2536,9 +2817,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       }
       
       function closeLightbox() {
-        // Stop any playing video
-        const video = content.querySelector('video');
-        if (video) video.pause();
+        // Stop any playing media
+        stopMedia();
         
         lightbox.classList.remove('active');
         lightbox.setAttribute('aria-hidden', 'true');
@@ -2637,17 +2917,24 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
         });
       });
       
-      // Wire up card-main clicks to open lightbox for previewable files (only when mainAction is lightbox)
+      // Wire up card-main clicks to open lightbox (only when mainAction is lightbox)
+      // For inline-previewable files (image/video/pdf/audio), card click opens lightbox
+      // For icon-only files, card click triggers download (default href behavior)
       const mainAction = '${getMainAction(env)}';
       if (mainAction === 'lightbox') {
         document.querySelectorAll('.file-card[data-lightbox="true"] .card-main').forEach(link => {
           link.addEventListener('click', (e) => {
-            e.preventDefault();
             const card = link.closest('.file-card');
-            const cardIndex = cards.indexOf(card);
-            if (cardIndex >= 0) {
-              openLightbox(cardIndex);
+            const previewType = card.dataset.lightboxType;
+            // Only intercept for inline-previewable types
+            if (previewType !== 'icon') {
+              e.preventDefault();
+              const cardIndex = cards.indexOf(card);
+              if (cardIndex >= 0) {
+                openLightbox(cardIndex);
+              }
             }
+            // For 'icon' type, let default behavior (download) happen
           });
         });
       }
