@@ -49,6 +49,7 @@ interface Env {
   // CDN URLs (optional - sensible defaults provided)
   JSZIP_URL?: string             // JSZip library URL (primary, default: cdnjs)
   JSZIP_FALLBACK_URL?: string    // JSZip library fallback URL (if primary fails, default: cdnjs)
+  JSZIP_INTEGRITY?: string       // SRI hash for custom JSZIP_URL (default provided for cdnjs, set empty to disable)
   
   // Cache control (seconds as strings - env vars are always strings)
   CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1 hour)
@@ -75,7 +76,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.7.0';
+const VERSION = '1.8.0';
 
 // Security limits
 const DEFAULT_MAX_GROUP_FILE_COUNT = 50;
@@ -91,8 +92,9 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-// Default CDN URLs
+// Default CDN URLs and SRI
 const DEFAULT_JSZIP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+const DEFAULT_JSZIP_INTEGRITY = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
 
 // Default cache durations (in seconds)
 const DEFAULT_GALLERY_CACHE_SECONDS = 3600;      // 1 hour
@@ -112,12 +114,31 @@ function getLinkHoverColor(env: Env): string {
   return env.LINK_HOVER_COLOR || 'inherit';
 }
 
-// Helper to get JSZip URLs (primary and fallback)
+// Helper to get JSZip URLs and SRI integrity
+// SRI logic: default URL uses default integrity, custom URL needs custom integrity (or set empty to disable)
+function getJsZipConfig(env: Env): { primary: string; fallback: string; integrity: string | undefined } {
+  const isCustomUrl = !!env.JSZIP_URL;
+  const primary = env.JSZIP_URL || DEFAULT_JSZIP_URL;
+  const fallback = env.JSZIP_FALLBACK_URL || DEFAULT_JSZIP_URL;
+  
+  // Integrity: use default for default URL, custom if provided, undefined to skip SRI
+  let integrity: string | undefined;
+  if (!isCustomUrl) {
+    // Using default URL - use default integrity
+    integrity = DEFAULT_JSZIP_INTEGRITY;
+  } else if (env.JSZIP_INTEGRITY) {
+    // Custom URL with custom integrity provided
+    integrity = env.JSZIP_INTEGRITY;
+  }
+  // If custom URL without integrity, integrity stays undefined (no SRI)
+  
+  return { primary, fallback, integrity };
+}
+
+// Legacy alias for compatibility
 function getJsZipUrls(env: Env): { primary: string; fallback: string } {
-  return {
-    primary: env.JSZIP_URL || DEFAULT_JSZIP_URL,
-    fallback: env.JSZIP_FALLBACK_URL || DEFAULT_JSZIP_URL
-  };
+  const config = getJsZipConfig(env);
+  return { primary: config.primary, fallback: config.fallback };
 }
 
 // Cache duration helpers
@@ -147,6 +168,66 @@ function getTextColor(env: Env): string { return env.TEXT_COLOR || '#111827'; }
 function getTextSecondaryColor(env: Env): string { return env.TEXT_SECONDARY_COLOR || '#6b7280'; }
 function getTextMutedColor(env: Env): string { return env.TEXT_MUTED_COLOR || '#9ca3af'; }
 function getHeaderBg(env: Env): string { return env.HEADER_BG || '#ffffffcc'; }
+
+// Extract hostname from URL for CSP
+function getHostFromUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.host;
+  } catch {
+    return null;
+  }
+}
+
+// Build Content-Security-Policy header value based on environment
+// Allows inline scripts/styles (required for this app) while restricting external resources
+function getContentSecurityPolicy(env: Env): string {
+  const jsZipConfig = getJsZipConfig(env);
+  
+  // Script sources: self, unsafe-inline for inline scripts, JSZip CDN host
+  const scriptSources = ["'self'", "'unsafe-inline'"];
+  const jsZipHost = getHostFromUrl(jsZipConfig.primary);
+  if (jsZipHost) scriptSources.push(jsZipHost);
+  // Add fallback host if different
+  const fallbackHost = getHostFromUrl(jsZipConfig.fallback);
+  if (fallbackHost && fallbackHost !== jsZipHost) scriptSources.push(fallbackHost);
+  
+  // Style sources: self, unsafe-inline for inline styles, font CSS host
+  const styleSources = ["'self'", "'unsafe-inline'"];
+  if (env.FONT_CSS_URL) {
+    const fontCssHost = getHostFromUrl(env.FONT_CSS_URL);
+    if (fontCssHost) styleSources.push(fontCssHost);
+  } else {
+    // Default Google Fonts
+    styleSources.push('fonts.googleapis.com');
+  }
+  
+  // Font sources: Google Fonts or custom
+  const fontSources = ["'self'"];
+  if (env.FONT_CSS_URL) {
+    // Custom fonts might come from same host as CSS or different
+    const fontCssHost = getHostFromUrl(env.FONT_CSS_URL);
+    if (fontCssHost) fontSources.push(fontCssHost);
+  } else {
+    fontSources.push('fonts.gstatic.com');
+  }
+  
+  // Build CSP directives
+  const directives = [
+    `default-src 'self'`,
+    `script-src ${scriptSources.join(' ')}`,
+    `style-src ${styleSources.join(' ')}`,
+    `font-src ${fontSources.join(' ')}`,
+    `img-src 'self' data: blob: https:`,
+    `media-src https:`,
+    `frame-src https:`,
+    `connect-src 'self' https:`,
+    `base-uri 'self'`,
+    `form-action 'self'`
+  ];
+  
+  return directives.join('; ');
+}
 
 // Grid layout helpers
 function getDefaultGridColumns(env: Env): number {
@@ -2167,17 +2248,26 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
   </div>` : ''}
 
   ${enableZipDownload ? (() => {
-    const urls = getJsZipUrls(env);
+    const config = getJsZipConfig(env);
     return `<script>
     (function() {
-      const primaryUrl = ${JSON.stringify(urls.primary)};
-      const fallbackUrl = ${JSON.stringify(urls.fallback)};
+      const primaryUrl = ${JSON.stringify(config.primary)};
+      const fallbackUrl = ${JSON.stringify(config.fallback)};
+      const integrity = ${JSON.stringify(config.integrity || '')};
       let script = document.createElement('script');
       script.src = primaryUrl;
+      if (integrity) {
+        script.integrity = integrity;
+        script.crossOrigin = 'anonymous';
+      }
       script.onerror = function() {
         console.warn('JSZip primary URL failed, trying fallback:', fallbackUrl);
         script = document.createElement('script');
         script.src = fallbackUrl;
+        if (integrity) {
+          script.integrity = integrity;
+          script.crossOrigin = 'anonymous';
+        }
         script.onerror = function() {
           console.error('JSZip failed to load from both primary and fallback URLs');
         };
@@ -3550,6 +3640,7 @@ export default {
         status: 400,
         headers: {
           'Content-Type': 'text/html;charset=UTF-8',
+          'Content-Security-Policy': getContentSecurityPolicy(env),
           'X-Frame-Options': 'DENY',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin'
@@ -3579,6 +3670,7 @@ export default {
       headers: {
         'Content-Type': 'text/html;charset=UTF-8',
         'Cache-Control': `public, max-age=${getGalleryCacheSeconds(env)}`,
+        'Content-Security-Policy': getContentSecurityPolicy(env),
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin'

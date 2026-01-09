@@ -140,6 +140,9 @@ Set these to customize the color scheme (e.g., for dark themes). All color vars 
 |----------|---------|-------------|
 | `JSZIP_URL` | cdnjs URL | JSZip library URL (primary) - self-host or use alternate CDN |
 | `JSZIP_FALLBACK_URL` | cdnjs URL | JSZip library fallback URL - used if primary fails to load |
+| `JSZIP_INTEGRITY` | (auto) | SRI hash for custom `JSZIP_URL` - default cdnjs URL has built-in hash |
+
+> **Note:** If you set a custom `JSZIP_URL`, provide the SRI hash via `JSZIP_INTEGRITY` for security. Set to empty string (`""`) to disable SRI verification.
 
 ### Cache Control (Optional)
 
@@ -286,6 +289,8 @@ This logs initialization, provider setup, and URL transformations to help troubl
 | **URL Validation** | Strict regex matching for Uploadcare group URL format |
 | **File Count Limit** | `MAX_GROUP_FILE_COUNT` env var (default: 50) + Uploadcare project limits |
 | **XSS Protection** | All user-supplied content (filenames, URL params) HTML-escaped |
+| **Content Security Policy** | Dynamic CSP header restricts scripts, styles, fonts, and other resources to known sources |
+| **Subresource Integrity** | JSZip loaded with SRI hash to prevent CDN tampering (configurable via `JSZIP_INTEGRITY`) |
 | **Clickjacking Protection** | `X-Frame-Options: DENY` header prevents iframe embedding |
 | **MIME Sniffing** | `X-Content-Type-Options: nosniff` header |
 | **Referrer Policy** | `Referrer-Policy: strict-origin-when-cross-origin` header |

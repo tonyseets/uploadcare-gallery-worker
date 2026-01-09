@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.8.0] - 2026-01-09
+
+### Security
+
+- **Content-Security-Policy (CSP)**: Added CSP header to all HTML responses, restricting resource loading to known sources
+  - Scripts: self, unsafe-inline, JSZip CDN host (configurable via `JSZIP_URL`)
+  - Styles: self, unsafe-inline, Google Fonts (or custom `FONT_CSS_URL` host)
+  - Fonts: Google Fonts or custom font host
+  - Images/media/frames: self, data:, blob:, https:
+  - Base-uri and form-action restricted to self
+- **Subresource Integrity (SRI)**: JSZip script now loaded with SRI hash to prevent tampering
+  - Default cdnjs URL includes SHA-512 integrity hash
+  - Custom `JSZIP_URL` can provide custom hash via `JSZIP_INTEGRITY` env var
+  - Set `JSZIP_INTEGRITY` to empty string to disable SRI for custom URLs
+
+### Added
+
+- `JSZIP_INTEGRITY` env var to provide SRI hash for custom JSZip URLs
+- `getContentSecurityPolicy()` helper function for dynamic CSP generation
+- `getJsZipConfig()` helper returning URL and integrity info
+
+### Changed
+
+- JSZip script element now includes `integrity` and `crossOrigin="anonymous"` attributes
+- Version bump to 1.8.0
+
 ## [1.7.0] - 2026-01-08
 
 ### Security

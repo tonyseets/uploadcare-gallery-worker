@@ -50,7 +50,9 @@ interface Env {
   TEXT_MUTED_COLOR?: string  // Muted text (default: #9ca3af)
   HEADER_BG?: string         // Header background (default: #ffffffcc)
   // CDN URLs
-  JSZIP_URL?: string         // JSZip library URL (default: cdnjs)
+  JSZIP_URL?: string             // JSZip library URL (default: cdnjs)
+  JSZIP_FALLBACK_URL?: string    // JSZip library fallback URL (if primary fails, default: cdnjs)
+  JSZIP_INTEGRITY?: string       // SRI hash for custom JSZIP_URL (default provided for cdnjs, set empty to disable)
   // Cache control (seconds as strings)
   CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1hr)
   CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 60s for ETag revalidation)
@@ -91,8 +93,10 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 2. **XSS Protection**: All user-supplied content (filenames, URL params) is HTML-escaped server-side via `escapeHtml()` and client-side
 3. **File Count Limits**: `MAX_GROUP_FILE_COUNT` env var (default: 50) + Uploadcare project settings
 4. **Security Headers**: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`
-5. **DoS Protection**: HEAD requests limited to 20 concurrent to avoid overwhelming Uploadcare
-6. **No Secrets**: All config is via non-secret env vars
+5. **Content-Security-Policy (CSP)**: Dynamic CSP restricts resource loading to known sources (JSZip CDN, fonts, etc.)
+6. **Subresource Integrity (SRI)**: JSZip loaded with integrity hash to prevent CDN tampering (default hash for cdnjs, configurable via `JSZIP_INTEGRITY`)
+7. **DoS Protection**: HEAD requests limited to 20 concurrent to avoid overwhelming Uploadcare
+8. **No Secrets**: All config is via non-secret env vars
 
 ## Common Tasks
 
