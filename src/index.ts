@@ -3295,7 +3295,7 @@ const UC_GALLERY_CONNECT_SCRIPT = `/**
       const galleryUrl = WORKER_URL + '?url=' + encodeURIComponent(groupUrl) + '&from=' + encodeURIComponent(pageSlug) + '&ts=' + timestamp;
       
       input.value = galleryUrl;
-      log('Updated input', inputName, 'with:', galleryUrl);
+      log('Updated input', selector, 'with:', galleryUrl);
     });
   }
 
