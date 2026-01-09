@@ -94,3 +94,6 @@ FONT_DISPLAY = "Inter"
 # Gallery layout options
 # DEFAULT_GRID_COLUMNS = "2"      # Default columns: "1", "2", "3", or "4"
 # IMAGE_FIT = "contain"           # Thumbnail fit: "contain" (letterbox) or "cover" (crop)
+
+# Security limits
+# MAX_GROUP_FILE_COUNT = "50"     # Max files allowed in a group URL (default: 50)
