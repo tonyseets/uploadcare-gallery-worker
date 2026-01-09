@@ -257,6 +257,8 @@ By default, the script updates an input with the same `name` as the provider's `
 
 Values starting with `#`, `.`, `[`, or containing `:` are treated as CSS selectors. Plain text is treated as an input name.
 
+**Submit-time rewrite:** Even if Uploadcare’s `<uc-form-input>` overwrites `file_upload_url` with the raw CDN URL, the script rewrites it to the gallery URL during form submit (capture phase). No HubSpot script changes are required.
+
 ### Debug Mode
 
 Add `?debug=true` to the script URL to enable console logging:

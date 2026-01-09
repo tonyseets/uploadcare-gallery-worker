@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.1] - 2026-01-09
+
+### Fixed
+
+- Submit-time rewrite guarantees `file_upload_url` (and `file_upload_url[]`) are converted to gallery URLs right before form submission, even if Uploadcare `<uc-form-input>` overwrites them with raw CDN URLs
+- Version bump for ETag: `uc-gallery-connect.js` now serves v1.6.1
+
 ## [1.6.0] - 2026-01-08
 
 ### Added

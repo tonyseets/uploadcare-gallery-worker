@@ -116,6 +116,8 @@ By default, the script updates an input with `name` matching the provider's `ctx
 <uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="[data-gallery-url]">
 ```
 
+Submit-time rewrite: If Uploadcare `<uc-form-input>` writes raw CDN URLs to `file_upload_url`, the script rewrites them to gallery URLs during submit (capture phase). No downstream form/HubSpot changes needed.
+
 Values starting with `#`, `.`, `[`, or containing `:` are treated as CSS selectors.
 
 ### Debug Mode
