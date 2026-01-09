@@ -69,11 +69,27 @@ interface Env {
   ENABLE_PDF_PREVIEW?: string    // Embed PDFs in lightbox iframe (default: true)
   ENABLE_AUDIO_PREVIEW?: string  // Show audio player in lightbox (default: true)
   VIDEO_AUTOPLAY?: string        // Auto-play videos in lightbox (default: false)
+  
+  // Security limits
+  MAX_GROUP_FILE_COUNT?: string  // Max files in a group URL (default: 50)
 }
 
 // Constants
-const VERSION = '1.6.1';
-// No server-side file limit - configure limits in your Uploadcare project settings
+const VERSION = '1.7.0';
+
+// Security limits
+const DEFAULT_MAX_GROUP_FILE_COUNT = 50;
+const HEAD_REQUEST_CONCURRENCY = 20;
+
+// HTML escaping - escapes &, <, >, ", ' for safe embedding in HTML
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
 
 // Default CDN URLs
 const DEFAULT_JSZIP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
@@ -144,6 +160,10 @@ function getImageFit(env: Env): string {
 
 function isLightboxEnabled(env: Env): boolean {
   return env.ENABLE_LIGHTBOX !== 'false';
+}
+
+function getMaxGroupFileCount(env: Env): number {
+  return parseInt(env.MAX_GROUP_FILE_COUNT || String(DEFAULT_MAX_GROUP_FILE_COUNT), 10);
 }
 
 function isPdfPreviewEnabled(env: Env): boolean {
@@ -223,6 +243,12 @@ function validateUrl(url: string, env: Env): ValidationResult {
   const count = parseInt(countStr, 10);
   if (count < 1) {
     return { valid: false, error: 'Invalid file count' };
+  }
+
+  // Check max file count limit
+  const maxCount = getMaxGroupFileCount(env);
+  if (count > maxCount) {
+    return { valid: false, error: `File count exceeds maximum (${maxCount})` };
   }
 
   return { valid: true, host, groupId, count };
@@ -397,31 +423,45 @@ function getExtensionFromFilename(filename: string): string {
   return match ? match[1].toLowerCase() : '';
 }
 
+// Fetch single file info via HEAD request
+async function fetchSingleFileInfo(baseUrl: string, index: number): Promise<FileInfo> {
+  const fileUrl = `${baseUrl}/nth/${index}/`;
+  try {
+    const response = await fetch(fileUrl, { method: 'HEAD' });
+    const contentDisposition = response.headers.get('Content-Disposition') || '';
+    // Parse filename from: inline; filename="somefile.png"
+    const match = contentDisposition.match(/filename="([^"]+)"/);
+    const filename = match ? match[1] : `File ${index + 1}`;
+    const extension = getExtensionFromFilename(filename);
+    return { index, url: fileUrl, filename, extension };
+  } catch {
+    return { index, url: fileUrl, filename: `File ${index + 1}`, extension: '' };
+  }
+}
+
+// Fetch file infos with concurrency limiting to avoid overwhelming Uploadcare
 async function fetchFileInfos(host: string, groupId: string, count: number): Promise<FileInfo[]> {
   const baseUrl = `https://${host}/${groupId}~${count}`;
+  const results: FileInfo[] = [];
 
-  // Fetch headers for each file to get filenames
-  const promises = Array.from({ length: count }, async (_, i) => {
-    const fileUrl = `${baseUrl}/nth/${i}/`;
-    try {
-      const response = await fetch(fileUrl, { method: 'HEAD' });
-      const contentDisposition = response.headers.get('Content-Disposition') || '';
-      // Parse filename from: inline; filename="somefile.png"
-      const match = contentDisposition.match(/filename="([^"]+)"/);
-      const filename = match ? match[1] : `File ${i + 1}`;
-      const extension = getExtensionFromFilename(filename);
-      return { index: i, url: fileUrl, filename, extension };
-    } catch {
-      return { index: i, url: fileUrl, filename: `File ${i + 1}`, extension: '' };
-    }
-  });
+  // Process in batches of HEAD_REQUEST_CONCURRENCY (20)
+  for (let i = 0; i < count; i += HEAD_REQUEST_CONCURRENCY) {
+    const batch = Array.from(
+      { length: Math.min(HEAD_REQUEST_CONCURRENCY, count - i) },
+      (_, j) => fetchSingleFileInfo(baseUrl, i + j)
+    );
+    const batchResults = await Promise.all(batch);
+    results.push(...batchResults);
+  }
 
-  const results = await Promise.all(promises);
   return results.sort((a, b) => a.index - b.index);
 }
 
 function generateHtml(env: Env, host: string, groupId: string, count: number, originalUrl: string, pageSlug: string, timestamp: number | null, fileInfos: FileInfo[]): string {
   const baseUrl = `https://${host}/${groupId}~${count}`;
+  
+  // Escape pageSlug for safe HTML embedding
+  const escapedPageSlug = escapeHtml(pageSlug);
   
   // Feature toggles
   const enableZipDownload = isFeatureEnabled(env.ENABLE_ZIP_DOWNLOAD);
@@ -443,8 +483,8 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     const fileUrl = file.url;
     const displayName = file.filename;
     const ext = file.extension;
-    // Escape HTML entities in filename for title attribute
-    const escapedName = displayName.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Escape HTML entities in filename for safe embedding in HTML
+    const escapedName = escapeHtml(displayName);
     
     const downloadUrl = `${fileUrl}/-/inline/no/`;
     
@@ -517,7 +557,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
             ${thumbnailHtml}
           </div>
           <div class="file-info">
-            <span class="file-name" title="${escapedName}">${displayName}</span>
+            <span class="file-name" title="${escapedName}">${escapedName}</span>
           </div>
         </a>
         <div class="card-actions">
@@ -2007,7 +2047,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
       <h1 class="sr-only">File Attachments</h1>
       <div class="meta-row">
         <div class="meta-left">
-          ${pageSlug ? `<span class="meta-label">From</span> <a href="${env.COMPANY_URL}/${pageSlug}" target="_blank" rel="noopener noreferrer nofollow">/<span class="slug-text">${pageSlug}</span></a>` : ''}${timestamp ? `${pageSlug ? ' <span class="meta-label">on</span> ' : ''}<span class="timestamp-wrap" id="timestamp-wrap" data-ts="${timestamp}" tabindex="0" role="button" aria-expanded="false" aria-haspopup="true">
+          ${pageSlug ? `<span class="meta-label">From</span> <a href="${env.COMPANY_URL}/${escapedPageSlug}" target="_blank" rel="noopener noreferrer nofollow">/<span class="slug-text">${escapedPageSlug}</span></a>` : ''}${timestamp ? `${pageSlug ? ' <span class="meta-label">on</span> ' : ''}<span class="timestamp-wrap" id="timestamp-wrap" data-ts="${timestamp}" tabindex="0" role="button" aria-expanded="false" aria-haspopup="true">
             <span class="timestamp-text"><span class="ts-long">${formatTimestamp(timestamp)}</span><span class="ts-short">${formatTimestampShort(timestamp)}</span></span>
             <div class="timestamp-tooltip" id="timestamp-tooltip" role="tooltip">
               <div class="tooltip-local" id="tooltip-local"></div>
@@ -2092,7 +2132,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     </div>
   </footer>
 
-  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer" tabindex="-1" data-page-slug="${pageSlug}" data-timestamp="${timestamp || ''}">
+  ${isLightboxEnabled(env) ? `<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Image viewer" tabindex="-1" data-page-slug="${escapedPageSlug}" data-timestamp="${timestamp || ''}">
     <div class="lightbox-backdrop"></div>
     <div class="lightbox-header">
       <div class="lightbox-header-left">
@@ -2148,6 +2188,13 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
     </script>`;
   })() : ''}
   <script>
+    // HTML escaping for safe DOM insertion
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     // Screen reader announcements helper
     function announce(message, assertive = false) {
       const el = document.getElementById(assertive ? 'download-status' : 'sr-status');
@@ -2667,7 +2714,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
             '<circle cx="6" cy="18" r="3"></circle>' +
             '<circle cx="18" cy="16" r="3"></circle>' +
           '</svg>' +
-          '<div class="audio-filename">' + name + '</div>' +
+          '<div class="audio-filename">' + escapeHtml(name) + '</div>' +
           '<div class="audio-controls">' +
             '<button class="audio-play-btn" aria-label="Play">' +
               '<svg class="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>' +
@@ -2676,7 +2723,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
             '<div class="audio-progress"><div class="audio-progress-fill"></div></div>' +
             '<span class="audio-time">0:00 / 0:00</span>' +
           '</div>' +
-          '<audio src="' + src + '" preload="metadata"></audio>' +
+          '<audio src="' + escapeHtml(src) + '" preload="metadata"></audio>' +
         '</div>';
       }
       
@@ -2786,7 +2833,7 @@ function generateHtml(env: Env, host: string, groupId: string, count: number, or
           // Icon fallback for non-previewable files
           const fallback = document.createElement('div');
           fallback.className = 'lightbox-icon-fallback';
-          fallback.innerHTML = getIconSvgForExt(ext) + '<span class="fallback-filename">' + name + '</span>';
+          fallback.innerHTML = getIconSvgForExt(ext) + '<span class="fallback-filename">' + escapeHtml(name) + '</span>';
           content.appendChild(fallback);
         }
         
@@ -3501,7 +3548,12 @@ export default {
     if (!validation.valid) {
       return new Response(generateErrorHtml(env, validation.error), {
         status: 400,
-        headers: { 'Content-Type': 'text/html;charset=UTF-8' }
+        headers: {
+          'Content-Type': 'text/html;charset=UTF-8',
+          'X-Frame-Options': 'DENY',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
       });
     }
 
@@ -3526,7 +3578,10 @@ export default {
       status: 200,
       headers: {
         'Content-Type': 'text/html;charset=UTF-8',
-        'Cache-Control': `public, max-age=${getGalleryCacheSeconds(env)}`
+        'Cache-Control': `public, max-age=${getGalleryCacheSeconds(env)}`,
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
       }
     });
   }

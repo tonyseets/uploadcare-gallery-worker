@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.7.0] - 2026-01-08
+
+### Security
+
+- **XSS Fixes**: Fixed 6 cross-site scripting vulnerabilities
+  - Server-side: filenames and page slug parameters now properly escaped in HTML output
+  - DOM-based: lightbox fallback filename, audio player filename, and audio src attribute now escaped before DOM insertion
+- **Security Headers**: Added `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: strict-origin-when-cross-origin` to all HTML responses
+- **DoS Protection**: Added `MAX_GROUP_FILE_COUNT` env var (default: 50) to limit file group sizes, with concurrency-limited HEAD requests (20 at a time) to prevent overwhelming Uploadcare
+
+### Added
+
+- `MAX_GROUP_FILE_COUNT` env var to configure maximum files allowed in a group URL (default: 50)
+- Server-side `escapeHtml()` utility function for consistent HTML escaping
+- Client-side `escapeHtml()` function for safe DOM insertion
+
+### Changed
+
+- HEAD requests for file info now processed in batches of 20 (down from unlimited parallelism)
+- Version bump to 1.7.0
+
 ## [1.6.2] - 2026-01-XX
 
 ### Added

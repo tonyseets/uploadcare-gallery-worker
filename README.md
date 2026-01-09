@@ -162,6 +162,14 @@ Disable specific UI features by setting to `"false"`:
 | `ENABLE_SHARE_BUTTON` | `true` | Show "Share" button in header |
 | `ENABLE_LIGHTBOX` | `true` | Enable lightbox modal for images/videos |
 
+### Security Limits (Optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAX_GROUP_FILE_COUNT` | `50` | Maximum files allowed in a group URL |
+
+If a group URL exceeds this limit, the worker returns a 400 error. This prevents denial-of-service via extremely large groups. HEAD requests to Uploadcare are also limited to 20 concurrent requests to avoid overwhelming the CDN.
+
 ### Lightbox
 
 When enabled (default), clicking an image or video opens it in a fullscreen modal overlay:
@@ -276,9 +284,14 @@ This logs initialization, provider setup, and URL transformations to help troubl
 |---------|----------------|
 | **CDN Allowlist** | Only URLs from configured `ALLOWED_CDN_HOSTS` are accepted |
 | **URL Validation** | Strict regex matching for Uploadcare group URL format |
-| **File Count Limit** | Configure in Uploadcare project settings |
+| **File Count Limit** | `MAX_GROUP_FILE_COUNT` env var (default: 50) + Uploadcare project limits |
+| **XSS Protection** | All user-supplied content (filenames, URL params) HTML-escaped |
+| **Clickjacking Protection** | `X-Frame-Options: DENY` header prevents iframe embedding |
+| **MIME Sniffing** | `X-Content-Type-Options: nosniff` header |
+| **Referrer Policy** | `Referrer-Policy: strict-origin-when-cross-origin` header |
 | **No Indexing** | `noindex, nofollow` meta tags |
 | **CORS** | Only enabled for `/uc-gallery-connect.js` endpoint |
+| **DoS Protection** | HEAD requests limited to 20 concurrent |
 
 ## Development
 

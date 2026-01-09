@@ -67,6 +67,8 @@ interface Env {
   // Grid layout
   DEFAULT_GRID_COLUMNS?: string  // Default columns: "1", "2", "3", or "4" (default: "2")
   IMAGE_FIT?: string             // Thumbnail fit: "contain" (letterbox) or "cover" (crop)
+  // Security limits
+  MAX_GROUP_FILE_COUNT?: string  // Max files in a group URL (default: 50)
 }
 
 // URL validation (uses env.ALLOWED_CDN_HOSTS)
@@ -86,9 +88,11 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 ## Security Considerations
 
 1. **CDN Allowlist**: Only URLs from configured `ALLOWED_CDN_HOSTS` are accepted
-2. **No User Input in HTML**: All dynamic content is escaped
-3. **File Count Limits**: Configure in your Uploadcare project settings (no server-side limit)
-4. **No Secrets**: All config is via non-secret env vars
+2. **XSS Protection**: All user-supplied content (filenames, URL params) is HTML-escaped server-side via `escapeHtml()` and client-side
+3. **File Count Limits**: `MAX_GROUP_FILE_COUNT` env var (default: 50) + Uploadcare project settings
+4. **Security Headers**: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`
+5. **DoS Protection**: HEAD requests limited to 20 concurrent to avoid overwhelming Uploadcare
+6. **No Secrets**: All config is via non-secret env vars
 
 ## Common Tasks
 
