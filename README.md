@@ -6,7 +6,11 @@ A Cloudflare Worker that transforms raw Uploadcare group URLs into a beautiful, 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
-  <img src="./assets/screenshot.webp" alt="Gallery Screenshot" width="700">
+  <img src="./assets/dash.png" alt="Gallery Dashboard" width="700">
+</p>
+
+<p align="center">
+  <img src="./assets/lightbox.png" alt="Lightbox Preview" width="700">
 </p>
 
 ## The Problem
