@@ -147,7 +147,7 @@ Control caching behavior (values in seconds as strings):
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CACHE_GALLERY_SECONDS` | `3600` | Gallery page cache (1 hour) |
-| `CACHE_SCRIPT_BROWSER_SECONDS` | `86400` | Script browser cache (1 day) |
+| `CACHE_SCRIPT_BROWSER_SECONDS` | `60` | Script browser cache (60s, frequent ETag revalidation) |
 | `CACHE_SCRIPT_CDN_SECONDS` | `604800` | Script CDN cache (7 days) |
 
 ### Feature Toggles (Optional)
@@ -194,7 +194,7 @@ FONT_DISPLAY = "Inter"
 | Path | Description | Caching |
 |------|-------------|---------|
 | `/?url=...` | Gallery viewer | 1 hour |
-| `/uc-gallery-connect.js?v=X.X.X` | Client-side URL transformer | Immutable (use version for cache busting) |
+| `/uc-gallery-connect.js` | Client-side URL transformer | ETag-based (auto-invalidates on deploy) |
 
 ## Client-Side Integration
 
@@ -208,10 +208,10 @@ One script tag, auto-configured. Add to your site's footer code:
 
 ```html
 <!-- UC Gallery Connect - transforms Uploadcare URLs to gallery URLs -->
-<script src="https://your-worker.workers.dev/uc-gallery-connect.js?v=1.2.0"></script>
+<script src="https://your-worker.workers.dev/uc-gallery-connect.js"></script>
 ```
 
-The worker URL is injected automatically. Update the `?v=` parameter to bust cache when upgrading.
+The worker URL is injected automatically. Cache invalidation is automatic via ETag — when you deploy a new version, browsers will fetch the updated script.
 
 ### Option 2: Inline the Script
 
@@ -233,6 +233,39 @@ Host the script on your own CDN (R2, S3, Cloudflare Pages, etc.). Copy `uc-galle
 4. Updates the form's hidden input
 
 Now when forms submit to your CRM/backend, they contain gallery URLs instead of raw Uploadcare URLs.
+
+### Flexible Input Targeting
+
+By default, the script updates an input with the same `name` as the provider's `ctx-name`. Use `data-gallery-input` to override with a different name or a full CSS selector:
+
+```html
+<!-- Default: updates input[name="file_upload_url"] -->
+<uc-upload-ctx-provider ctx-name="file_upload_url">
+
+<!-- Override with different name -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="attachments">
+
+<!-- Override with CSS selector (id) -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="#my-hidden-field">
+
+<!-- Override with CSS selector (class) -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input=".upload-url-field">
+
+<!-- Override with CSS selector (attribute) -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="[data-gallery-url]">
+```
+
+Values starting with `#`, `.`, `[`, or containing `:` are treated as CSS selectors. Plain text is treated as an input name.
+
+### Debug Mode
+
+Add `?debug=true` to the script URL to enable console logging:
+
+```html
+<script src="https://your-worker.workers.dev/uc-gallery-connect.js?debug=true"></script>
+```
+
+This logs initialization, provider setup, and URL transformations to help troubleshoot issues.
 
 ## Security
 
@@ -275,7 +308,22 @@ npm run tail
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-> **Without uc-gallery-connect.js:** You can skip the client-side script entirely and transform URLs server-side, or even manually prepend the worker URL when needed.
+### Manual URL Construction (JS SDK / API Users)
+
+If you're using Uploadcare's JS SDK or REST API directly (not the web component), construct gallery URLs yourself:
+
+```javascript
+// After uploading a file group via SDK/API
+const groupCdnUrl = 'https://ucarecdn.com/abc123~3/';
+const galleryUrl = `https://your-worker.workers.dev/?url=${encodeURIComponent(groupCdnUrl)}`;
+
+// Optional: add metadata
+const pageSlug = window.location.pathname.replace(/^\/|\/$/g, '') || 'unknown';
+const timestamp = Math.floor(Date.now() / 1000);
+const fullUrl = `${galleryUrl}&from=${encodeURIComponent(pageSlug)}&ts=${timestamp}`;
+```
+
+Works from any context: browser JS, Node.js, serverless functions, backend APIs, etc.
 
 ## Alternative Hosting
 

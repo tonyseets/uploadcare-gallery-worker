@@ -5,7 +5,7 @@
 Cloudflare Worker that wraps Uploadcare group URLs in a branded gallery page. Two main functions:
 
 1. **Gallery Viewer** (`/?url=...`) — Renders HTML gallery for file groups
-2. **UC Gallery Connect** (`/uc-gallery-connect.js?v=X.X.X`) — Client-side script for Webflow forms
+2. **UC Gallery Connect** (`/uc-gallery-connect.js`) — Client-side script for Webflow forms (ETag-based caching)
 
 **Fully white-labelable** via environment variables in `wrangler.toml`.
 
@@ -53,7 +53,7 @@ interface Env {
   JSZIP_URL?: string         // JSZip library URL (default: cdnjs)
   // Cache control (seconds as strings)
   CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1hr)
-  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 86400 = 1 day)
+  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 60s for ETag revalidation)
   CACHE_SCRIPT_CDN_SECONDS?: string     // Script CDN cache (default: 604800 = 7 days)
   // Feature toggles ("true"/"false", default: "true")
   ENABLE_ZIP_DOWNLOAD?: string   // Show "Download ZIP" button
@@ -95,8 +95,38 @@ export default { fetch(request: Request, env: Env): Promise<Response> }
 ### Update the Uploader Script
 
 1. Edit the `UC_GALLERY_CONNECT_SCRIPT` constant in `src/index.ts`
-2. Optionally update `uc-gallery-connect.example.js` for reference
-3. Deploy: `npm run deploy`
+2. Bump the `VERSION` constant (used for ETag cache invalidation)
+3. Optionally update `uc-gallery-connect.example.js` for reference
+4. Deploy: `npm run deploy`
+
+### Flexible Input Targeting
+
+By default, the script updates an input with `name` matching the provider's `ctx-name`. Use `data-gallery-input` to override with a different name or a full CSS selector:
+
+```html
+<!-- Default: updates input[name="file_upload_url"] -->
+<uc-upload-ctx-provider ctx-name="file_upload_url">
+
+<!-- Override with different name -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="attachments">
+
+<!-- Override with CSS selector -->
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="#my-field">
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input=".upload-url">
+<uc-upload-ctx-provider ctx-name="file_upload_url" data-gallery-input="[data-gallery-url]">
+```
+
+Values starting with `#`, `.`, `[`, or containing `:` are treated as CSS selectors.
+
+### Debug Mode
+
+Add `?debug=true` to the script URL for console logging:
+
+```html
+<script src="https://your-worker.workers.dev/uc-gallery-connect.js?debug=true"></script>
+```
+
+Logs: initialization, provider setup, group-created events, and URL transformations.
 
 ### Add a New CDN Host
 
@@ -218,8 +248,7 @@ curl "http://localhost:8787/uc-gallery-connect.js"
 npm run deploy
 ```
 
-Note: `/uc-gallery-connect.js` uses immutable caching with version-based cache busting.
-To push updates, bump the version in the embed URL: `/uc-gallery-connect.js?v=X.X.X`
+The `/uc-gallery-connect.js` script uses ETag-based caching. When you deploy a new version, browsers automatically fetch the updated script on their next revalidation (every 60s by default). No manual cache busting needed.
 
 ## Dependencies
 

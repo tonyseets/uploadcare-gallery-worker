@@ -51,7 +51,7 @@ interface Env {
   
   // Cache control (seconds as strings - env vars are always strings)
   CACHE_GALLERY_SECONDS?: string        // Gallery page cache (default: 3600 = 1 hour)
-  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 86400 = 1 day)
+  CACHE_SCRIPT_BROWSER_SECONDS?: string // Script browser cache (default: 60s for ETag revalidation)
   CACHE_SCRIPT_CDN_SECONDS?: string     // Script CDN cache (default: 604800 = 7 days)
   
   // Feature toggles ("true"/"false" as strings, default: "true" = enabled)
@@ -71,7 +71,7 @@ interface Env {
 }
 
 // Constants
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 // No server-side file limit - configure limits in your Uploadcare project settings
 
 // Default CDN URLs
@@ -79,7 +79,7 @@ const DEFAULT_JSZIP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/j
 
 // Default cache durations (in seconds)
 const DEFAULT_GALLERY_CACHE_SECONDS = 3600;      // 1 hour
-const DEFAULT_SCRIPT_BROWSER_CACHE_SECONDS = 86400;   // 1 day
+const DEFAULT_SCRIPT_BROWSER_CACHE_SECONDS = 60;      // 60 seconds (frequent revalidation with ETag)
 const DEFAULT_SCRIPT_CDN_CACHE_SECONDS = 604800;      // 7 days
 
 // Default colors for optional env vars
@@ -3225,34 +3225,110 @@ function generateErrorHtml(env: Env, error: string): string {
 </html>`;
 }
 
-// UC Gallery Connect script served from worker (CDN cached)
-// The WORKER_URL placeholder is replaced at runtime with env.WORKER_URL
+// UC Gallery Connect script served from worker (ETag-based caching)
+// The WORKER_URL and DEBUG placeholders are replaced at runtime
 const UC_GALLERY_CONNECT_SCRIPT = `/**
- * Uploadcare Gallery URL Transformer
+ * Uploadcare Gallery URL Transformer v1.6.0
  * Automatically wraps Uploadcare group URLs with the gallery worker for a better viewing experience.
+ * 
+ * Features:
+ * - Transforms Uploadcare group URLs to gallery URLs on form submission
+ * - Supports data-gallery-input attribute to override target input field
+ * - MutationObserver for dynamically added providers
+ * - Debug mode via ?debug=true query param
  */
 (function() {
   const WORKER_URL = '__WORKER_URL__';
+  const DEBUG = false;
+  
+  // WeakSet to prevent duplicate listeners on same provider
+  const processedProviders = new WeakSet();
+  
+  function log(...args) {
+    if (DEBUG) console.log('[uc-gallery-connect]', ...args);
+  }
+  
+  function warn(...args) {
+    if (DEBUG) console.warn('[uc-gallery-connect]', ...args);
+  }
+
+  function setupProvider(provider) {
+    // Skip if already processed
+    if (processedProviders.has(provider)) {
+      log('Provider already processed, skipping:', provider);
+      return;
+    }
+    processedProviders.add(provider);
+    
+    const ctxName = provider.getAttribute('ctx-name');
+    if (!ctxName) {
+      warn('Provider missing ctx-name attribute:', provider);
+      return;
+    }
+    
+    log('Setting up provider:', ctxName);
+    
+    provider.addEventListener('group-created', (e) => {
+      const groupUrl = e.detail?.group?.cdnUrl;
+      if (!groupUrl) {
+        warn('group-created event missing cdnUrl:', e.detail);
+        return;
+      }
+      
+      log('Group created:', groupUrl);
+      
+      // Check for data-gallery-input override, fallback to ctx-name
+      const inputTarget = provider.getAttribute('data-gallery-input') || ctxName;
+      // If it looks like a CSS selector (starts with # . [ or contains :), use as-is
+      // Otherwise treat as input name attribute
+      const isSelector = /^[#.\\[]|:/.test(inputTarget);
+      const selector = isSelector ? inputTarget : 'input[name="' + inputTarget + '"]';
+      const input = document.querySelector(selector);
+      
+      if (!input) {
+        warn('Input not found for selector:', selector);
+        return;
+      }
+      
+      const pageSlug = window.location.pathname.replace(/^\\//, '').replace(/\\/$/, '') || 'unknown';
+      const timestamp = Math.floor(Date.now() / 1000);
+      const galleryUrl = WORKER_URL + '?url=' + encodeURIComponent(groupUrl) + '&from=' + encodeURIComponent(pageSlug) + '&ts=' + timestamp;
+      
+      input.value = galleryUrl;
+      log('Updated input', inputName, 'with:', galleryUrl);
+    });
+  }
 
   function init() {
-    const providers = document.querySelectorAll('uc-upload-ctx-provider');
+    log('Initializing...');
     
-    providers.forEach(provider => {
-      provider.addEventListener('group-created', (e) => {
-        const groupUrl = e.detail?.group?.cdnUrl;
-        if (!groupUrl) return;
-
-        const ctxName = provider.getAttribute('ctx-name');
-        if (!ctxName) return;
-
-        const input = document.querySelector('input[name="' + ctxName + '"]');
-        if (input) {
-          const pageSlug = window.location.pathname.replace(/^\\//, '').replace(/\\/$/, '') || 'unknown';
-          const timestamp = Math.floor(Date.now() / 1000);
-          input.value = WORKER_URL + '?url=' + encodeURIComponent(groupUrl) + '&from=' + encodeURIComponent(pageSlug) + '&ts=' + timestamp;
+    // Setup existing providers
+    const providers = document.querySelectorAll('uc-upload-ctx-provider');
+    log('Found', providers.length, 'existing provider(s)');
+    providers.forEach(setupProvider);
+    
+    // Watch for dynamically added providers
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if the added node is a provider
+            if (node.tagName === 'UC-UPLOAD-CTX-PROVIDER') {
+              log('New provider added dynamically');
+              setupProvider(node);
+            }
+            // Check children of added node
+            const childProviders = node.querySelectorAll?.('uc-upload-ctx-provider');
+            if (childProviders) {
+              childProviders.forEach(setupProvider);
+            }
+          }
         }
-      });
+      }
     });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    log('MutationObserver active');
   }
 
   if (document.readyState === 'loading') {
@@ -3277,18 +3353,37 @@ export default {
       });
     }
     
-    // Serve the UC Gallery Connect script (CDN cached)
+    // Serve the UC Gallery Connect script (ETag-based caching)
     if (url.pathname === '/uc-gallery-connect.js') {
-      // Generate script with configured worker URL
-      const script = UC_GALLERY_CONNECT_SCRIPT.replace(
-        "'__WORKER_URL__'",
-        `'${env.WORKER_URL}'`
-      );
+      const etag = `"${VERSION}"`;
+      const ifNoneMatch = request.headers.get('If-None-Match');
+      
+      // Return 304 if ETag matches (content unchanged)
+      if (ifNoneMatch === etag) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            'ETag': etag,
+            'Cache-Control': `public, max-age=${getScriptBrowserCacheSeconds(env)}, s-maxage=${getScriptCdnCacheSeconds(env)}`,
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+      
+      // Check for debug mode
+      const debug = url.searchParams.get('debug') === 'true';
+      
+      // Generate script with configured worker URL and debug flag
+      const script = UC_GALLERY_CONNECT_SCRIPT
+        .replace("'__WORKER_URL__'", `'${env.WORKER_URL}'`)
+        .replace("const DEBUG = false;", `const DEBUG = ${debug};`);
+      
       return new Response(script, {
         status: 200,
         headers: {
           'Content-Type': 'application/javascript; charset=UTF-8',
           'Cache-Control': `public, max-age=${getScriptBrowserCacheSeconds(env)}, s-maxage=${getScriptCdnCacheSeconds(env)}`,
+          'ETag': etag,
           'Access-Control-Allow-Origin': '*'
         }
       });

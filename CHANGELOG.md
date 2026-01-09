@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.0] - 2026-01-08
+
+### Added
+
+- **ETag-based cache busting**: Script uses ETag headers for efficient revalidation — no more `?v=X.X.X` needed in embed URLs
+- **Flexible input targeting** (`data-gallery-input`): Override target input with a name or full CSS selector (`#id`, `.class`, `[attr]`)
+- **Debug mode** (`?debug=true`): Enable console logging for troubleshooting integration issues
+- **MutationObserver**: Dynamically added `<uc-upload-ctx-provider>` elements are automatically detected
+- **Manual URL construction docs**: README now documents how to construct gallery URLs for JS SDK/API users
+
+### Changed
+
+- Default browser cache for `/uc-gallery-connect.js` reduced from 1 day to 60 seconds for faster ETag revalidation
+- Script endpoint returns `304 Not Modified` when ETag matches (fast, no body transfer)
+- Old embeds with `?v=X.X.X` continue to work — version param is simply ignored
+
+### Technical
+
+- ETag value matches VERSION constant (e.g., `"1.6.0"`)
+- `data-gallery-input` accepts CSS selectors (values starting with `#`, `.`, `[`, or containing `:`)
+- MutationObserver watches `document.body` with `{ childList: true, subtree: true }`
+- WeakSet prevents duplicate event listeners on same provider
+- `log()` and `warn()` helpers for debug output
+
 ## [1.5.0] - 2026-01-08
 
 ### Added
