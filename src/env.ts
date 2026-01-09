@@ -9,7 +9,7 @@ import type { Env } from './types';
 import { escapeHtml } from './utils';
 
 // Version constant (used for ETag-based caching)
-export const VERSION = '1.8.0';
+export const VERSION = '1.9.0';
 
 // Security limits
 export const DEFAULT_MAX_GROUP_FILE_COUNT = 50;
